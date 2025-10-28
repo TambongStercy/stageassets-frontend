@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+@theme {
+  /* Primary Palette - Green */
+  --color-primary-50: #f0fdf4;
+  --color-primary-100: #dcfce7;
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #047857;
+  --color-primary-600: #047857;
+  --color-primary-700: #065f46;
+  --color-primary-800: #064e3b;
+  --color-primary-900: #022c22;
+  --color-primary: #047857;
+
+  /* Secondary Palette - Gold */
+  --color-secondary-50: #fefce8;
+  --color-secondary-100: #fef9c3;
+  --color-secondary-200: #fef08a;
+  --color-secondary-300: #fde047;
+  --color-secondary-400: #facc15;
+  --color-secondary-500: #ca8a04;
+  --color-secondary-600: #ca8a04;
+  --color-secondary-700: #a16207;
+  --color-secondary-800: #854d0e;
+  --color-secondary-900: #713f12;
+  --color-secondary: #ca8a04;
+
+  /* Text Colors */
+  --color-text-dark: #1f2937;
+  --color-text-medium: #4b5563;
+  --color-text-light: #6b7280;
+
+  /* Border Colors */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+
+  /* Background Colors */
+  --color-background: #f9fafb;
+  --color-background-white: #ffffff;
+
+  /* Success Colors */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success: #10b981;
+
+  /* Warning Colors */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning: #f59e0b;
+
+  /* Error Colors */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error: #ef4444;
+
+  /* Font Families */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Font Sizes */
+  --font-size-display-lg: 4.5rem;
+  --font-size-display-md: 3.75rem;
+  --font-size-display-sm: 3rem;
+  --font-size-heading-xl: 2.25rem;
+  --font-size-heading-lg: 1.875rem;
+  --font-size-heading-md: 1.5rem;
+  --font-size-heading-sm: 1.25rem;
+  --font-size-body-lg: 1.125rem;
+  --font-size-body-md: 1rem;
+  --font-size-body-sm: 0.875rem;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-strong: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-up: slide-up 0.6s ease-out;
+  --animate-slide-down: slide-down 0.6s ease-out;
+  --animate-scale: scale 0.3s ease-out;
+  --animate-float: float 3s ease-in-out infinite;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-medium);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-dark);
+  }
+}
+
+/* Custom Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Animation Utility Classes */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.6s ease-out;
+  }
+
+  .animate-scale {
+    animation: scale 0.3s ease-out;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .blur-3xl {
+    filter: blur(96px);
+  }
+
+  .blur-2xl {
+    filter: blur(64px);
+  }
+
+  .-z-10 {
+    z-index: -10;
+  }
+}
