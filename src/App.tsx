@@ -4,7 +4,15 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import GoogleCallbackPage from './pages/auth/GoogleCallbackPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import ActivityLogsPage from './pages/ActivityLogsPage';
+import PricingPage from './pages/PricingPage';
+import SettingsPage from './pages/SettingsPage';
 import CreateEventPage from './pages/events/CreateEventPage';
 import EventDetailsPage from './pages/events/EventDetailsPage';
 import SpeakerPortalPage from './pages/portal/SpeakerPortalPage';
@@ -19,6 +27,11 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/portal/speakers/:accessToken" element={<SpeakerPortalPage />} />
 
           {/* Protected Routes */}
@@ -27,6 +40,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activity-logs"
+            element={
+              <ProtectedRoute>
+                <ActivityLogsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

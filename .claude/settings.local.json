@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:stagetimer.io)"
+      "WebFetch(domain:stagetimer.io)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

@@ -6,17 +6,23 @@ import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { Button } from '../../components/ui';
+import { ImageUpload } from '../../components/ImageUpload';
+import { PlanLimitError } from '../../components/PlanLimitError';
 import { eventsService } from '../../services/events.service';
 import { eventSchema, type EventFormData } from '../../schemas/event.schema';
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [isPlanLimitError, setIsPlanLimitError] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -26,19 +32,35 @@ export default function CreateEventPage() {
     },
   });
 
+  const brandColor = watch('brandColor');
+
   const createMutation = useMutation({
-    mutationFn: eventsService.createEvent,
+    mutationFn: ({ data, logo }: { data: EventFormData; logo: File | null }) => {
+      if (logo) {
+        return eventsService.createEventWithLogo(data, logo);
+      }
+      return eventsService.createEvent(data);
+    },
     onSuccess: (data) => {
       navigate(`/events/${data.id}`);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to create event');
+      const errorMessage = err.response?.data?.message || 'Failed to create event';
+      setError(errorMessage);
+      // Check if it's a plan limit error (403 status)
+      setIsPlanLimitError(err.response?.status === 403);
     },
   });
 
   const onSubmit = (data: EventFormData) => {
     setError(null);
-    createMutation.mutate(data);
+    setIsPlanLimitError(false);
+    createMutation.mutate({ data, logo: logoFile });
+  };
+
+  const handleUpgrade = () => {
+    // TODO: Navigate to pricing/subscription page when implemented
+    navigate('/dashboard');
   };
 
   return (
@@ -59,7 +81,12 @@ export default function CreateEventPage() {
       {/* Form */}
       <div className="max-w-3xl">
         <div className="bg-white border border-gray-200 rounded-lg p-8">
-          {error && (
+          {error && isPlanLimitError && (
+            <div className="mb-6">
+              <PlanLimitError message={error} onUpgrade={handleUpgrade} />
+            </div>
+          )}
+          {error && !isPlanLimitError && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -151,9 +178,9 @@ export default function CreateEventPage() {
                 </label>
                 <div className="flex gap-2">
                   <input
-                    {...register('brandColor')}
                     type="color"
-                    id="brandColor"
+                    value={brandColor}
+                    onChange={(e) => setValue('brandColor', e.target.value)}
                     className="h-10 w-20 border border-gray-300 rounded-md cursor-pointer"
                   />
                   <input
@@ -168,21 +195,13 @@ export default function CreateEventPage() {
                 )}
               </div>
 
-              {/* Logo URL */}
+              {/* Event Logo */}
               <div>
-                <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                  Logo URL
-                </label>
-                <input
-                  {...register('logoUrl')}
-                  type="text"
-                  id="logoUrl"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="https://example.com/logo.png"
+                <ImageUpload
+                  label="Event Logo"
+                  onFileSelect={setLogoFile}
+                  maxSizeMB={10}
                 />
-                {errors.logoUrl && (
-                  <p className="mt-1 text-sm text-red-600">{errors.logoUrl.message}</p>
-                )}
               </div>
             </div>
 

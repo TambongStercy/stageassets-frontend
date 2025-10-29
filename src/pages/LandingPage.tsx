@@ -1,8 +1,21 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Download, FileText, Mail, Users, Clock, Sparkles, Package } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Container, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui';
+import { useAuth } from '../hooks/useAuth';
+import { subscriptionPlansService } from '../services/subscription-plans.service';
 
 const LandingPage = () => {
+  const { loginWithGoogle } = useAuth();
+
+  // Fetch subscription plans
+  const { data: plans, isLoading: plansLoading } = useQuery({
+    queryKey: ['subscription-plans', 'public'],
+    queryFn: () => subscriptionPlansService.getPublicPlans(),
+    retry: false, // Don't retry on public pages
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section with Cloudy Blur Background */}
@@ -35,6 +48,18 @@ const LandingPage = () => {
                 <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Help</a>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={loginWithGoogle}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span className="text-sm text-gray-700">Google</span>
+                </button>
                 <a href="/login" className="text-sm text-gray-600 hover:text-gray-900">Sign in</a>
                 <a href="/register">
                   <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white">
@@ -293,72 +318,57 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Starter */}
-            <div className="border border-gray-200 rounded-lg p-6 bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Starter</h3>
-              <div className="mt-3 mb-4">
-                <span className="text-3xl font-bold text-gray-900">$39</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-2 mb-6 text-sm">
-                {['1 active event', '10 speakers', 'File validation', 'Auto reminders', 'Email support'].map((item) => (
-                  <li key={item} className="flex items-start text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
-                    {item}
-                  </li>
+          {plansLoading ? (
+            <div className="text-center py-12 text-gray-600">Loading plans...</div>
+          ) : plans && plans.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {plans
+                .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                .map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`rounded-lg p-6 bg-white relative ${
+                      plan.isPopular
+                        ? 'border-2 border-emerald-700'
+                        : 'border border-gray-200'
+                    }`}
+                  >
+                    {plan.isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="px-3 py-1 bg-yellow-500 text-slate-900 text-xs font-semibold rounded-full">
+                          Most popular
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{plan.name}</h3>
+                    <div className="mt-3 mb-4">
+                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                      <span className="text-gray-600">/{plan.billingInterval === 'monthly' ? 'month' : 'year'}</span>
+                    </div>
+                    <ul className="space-y-2 mb-6 text-sm">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start text-gray-700">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant={plan.isPopular ? 'default' : 'secondary'}
+                      className={
+                        plan.isPopular
+                          ? 'w-full bg-emerald-700 hover:bg-emerald-800 text-white'
+                          : 'w-full'
+                      }
+                    >
+                      {plan.ctaText || (plan.ctaAction === 'contact' ? 'Contact sales' : 'Start trial')}
+                    </Button>
+                  </div>
                 ))}
-              </ul>
-              <Button variant="secondary" className="w-full">
-                Start trial
-              </Button>
             </div>
-
-            {/* Professional */}
-            <div className="border-2 border-emerald-700 rounded-lg p-6 bg-white relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="px-3 py-1 bg-yellow-500 text-slate-900 text-xs font-semibold rounded-full">
-                  Most popular
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Professional</h3>
-              <div className="mt-3 mb-4">
-                <span className="text-3xl font-bold text-gray-900">$99</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-2 mb-6 text-sm">
-                {['3 active events', '50 speakers each', 'Branded portal', 'File validation', 'Priority support', 'CSV export'].map((item) => (
-                  <li key={item} className="flex items-start text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full bg-emerald-700 hover:bg-emerald-800 text-white">
-                Start trial
-              </Button>
-            </div>
-
-            {/* Agency */}
-            <div className="border border-gray-200 rounded-lg p-6 bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Agency</h3>
-              <div className="mt-3 mb-4">
-                <span className="text-3xl font-bold text-gray-900">$249</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-2 mb-6 text-sm">
-                {['Unlimited events', '100 speakers each', 'White-label', 'API access', 'Dedicated support', 'Custom features'].map((item) => (
-                  <li key={item} className="flex items-start text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="secondary" className="w-full">
-                Contact sales
-              </Button>
-            </div>
-          </div>
+          ) : (
+            <div className="text-center py-12 text-gray-600">No plans available at the moment.</div>
+          )}
 
           <p className="text-center text-sm text-gray-500 mt-8">
             Need something custom? <a href="#" className="text-emerald-700 hover:underline font-medium">Get in touch</a>

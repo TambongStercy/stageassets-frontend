@@ -26,7 +26,22 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
-      window.location.href = '/login';
+
+      // Only redirect to login if not already on a public page
+      const publicPaths = [
+        '/',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+        '/verify-email',
+      ];
+      const currentPath = window.location.pathname;
+      const isPublicPage = publicPaths.some(path => currentPath === path || currentPath.startsWith('/portal/'));
+
+      if (!isPublicPage) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

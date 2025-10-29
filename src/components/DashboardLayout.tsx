@@ -1,8 +1,16 @@
-import { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FileText, LogOut } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  FileText,
+  LogOut,
+  LayoutDashboard,
+  ScrollText,
+  Settings,
+  Menu,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { Container } from './ui';
+import { getFileUrl } from '../lib/file-url';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,47 +19,143 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const navItems = [
+    {
+      icon: LayoutDashboard,
+      label: 'Events',
+      path: '/dashboard',
+    },
+    {
+      icon: ScrollText,
+      label: 'Activity Logs',
+      path: '/activity-logs',
+    },
+    {
+      icon: Settings,
+      label: 'Settings',
+      path: '/settings',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <Container>
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-slate-900 rounded-md flex items-center justify-center">
-                <FileText className="w-5 h-5 text-emerald-400" />
-              </div>
-              <span className="text-lg font-semibold text-gray-900">StageAsset</span>
-            </Link>
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden animate-in fade-in duration-200"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-            {/* User Menu */}
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {user?.firstName || user?.email}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign out
-              </button>
+      {/* Sidebar */}
+      <aside className={`w-64 bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0`}>
+        {/* Logo */}
+        <div className="h-16 flex items-center justify-between px-6">
+          <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setIsSidebarOpen(false)}>
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
+              <FileText className="w-5 h-5 text-white" />
             </div>
-          </div>
-        </Container>
-      </header>
+            <span className="text-lg font-semibold text-gray-900">StageAsset</span>
+          </Link>
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
 
-      {/* Main Content */}
-      <main className="py-8">
-        <Container>{children}</Container>
-      </main>
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Section at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+          <div className="flex items-center gap-3 px-3 py-2">
+            {user?.avatarUrl ? (
+              <img
+                src={getFileUrl(user.avatarUrl)!}
+                alt="Profile"
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-100"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center ring-2 ring-gray-100">
+                <span className="text-sm font-semibold text-emerald-700">
+                  {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.firstName || user?.email?.split('@')[0]}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="lg:ml-64">
+        {/* Mobile Header with Hamburger */}
+        <header className="lg:hidden h-16 bg-white border-b border-gray-200 sticky top-0 z-30 px-4 flex items-center">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-lg font-semibold text-gray-900">StageAsset</span>
+          </div>
+          <div className="w-10"></div> {/* Spacer for centering */}
+        </header>
+
+        {/* Page Content */}
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }

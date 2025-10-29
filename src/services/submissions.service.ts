@@ -51,4 +51,27 @@ export const submissionsService = {
   async deleteSubmission(speakerId: number, submissionId: number): Promise<void> {
     await apiClient.delete(`/portal/speakers/${speakerId}/submissions/${submissionId}`);
   },
+
+  /**
+   * Get version history for an asset requirement
+   */
+  async getVersionHistory(
+    speakerId: number,
+    assetRequirementId: number
+  ): Promise<Submission[]> {
+    const response = await apiClient.get<Submission[]>(
+      `/portal/speakers/${speakerId}/submissions/asset-requirements/${assetRequirementId}/versions`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get a specific version
+   */
+  async getVersion(speakerId: number, submissionId: number): Promise<Submission> {
+    const response = await apiClient.get<Submission>(
+      `/portal/speakers/${speakerId}/submissions/versions/${submissionId}`
+    );
+    return response.data;
+  },
 };

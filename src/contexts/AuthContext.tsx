@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  loginWithGoogle: () => void;
+  setUser: (user: User | null) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,6 +66,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     navigate('/login');
   };
 
+  const loginWithGoogle = () => {
+    // Redirect to backend Google OAuth endpoint
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    window.location.href = `${apiUrl}/auth/google`;
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -71,6 +79,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     register,
     logout,
+    loginWithGoogle,
+    setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

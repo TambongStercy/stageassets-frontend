@@ -1,8 +1,10 @@
-import { Mail, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Trash2, Copy, ExternalLink, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Speaker } from '../types/speaker.types';
 import { Badge } from './ui';
+import { ConfirmationModal } from './ConfirmationModal';
 import { speakersService } from '../services/speakers.service';
 
 interface SpeakerTableProps {
@@ -12,6 +14,9 @@ interface SpeakerTableProps {
 
 export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
   const queryClient = useQueryClient();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [speakerToDelete, setSpeakerToDelete] = useState<{ id: number; name: string; email: string } | null>(null);
+  const [copiedSpeakerId, setCopiedSpeakerId] = useState<number | null>(null);
 
   const resendMutation = useMutation({
     mutationFn: (speakerId: number) => speakersService.resendInvitation(eventId, speakerId),
@@ -27,6 +32,37 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
       queryClient.invalidateQueries({ queryKey: ['events-stats'] });
     },
   });
+
+  const handleDeleteClick = (speaker: Speaker) => {
+    const name = speaker.firstName || speaker.lastName
+      ? `${speaker.firstName || ''} ${speaker.lastName || ''}`.trim()
+      : speaker.email;
+    setSpeakerToDelete({ id: speaker.id, name, email: speaker.email });
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (speakerToDelete) {
+      deleteMutation.mutate(speakerToDelete.id);
+      setIsDeleteModalOpen(false);
+      setSpeakerToDelete(null);
+    }
+  };
+
+  const getPortalLink = (accessToken: string) => {
+    return `${window.location.origin}/portal/speakers/${accessToken}`;
+  };
+
+  const handleCopyLink = async (speaker: Speaker) => {
+    const link = getPortalLink(speaker.accessToken);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedSpeakerId(speaker.id);
+      setTimeout(() => setCopiedSpeakerId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
 
   const getStatusBadge = (status: Speaker['submissionStatus']) => {
     const variants = {
@@ -64,6 +100,7 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
             <th className="pb-3 font-medium">Speaker</th>
             <th className="pb-3 font-medium">Company</th>
             <th className="pb-3 font-medium">Status</th>
+            <th className="pb-3 font-medium">Portal Link</th>
             <th className="pb-3 font-medium">Invited</th>
             <th className="pb-3 font-medium text-right">Actions</th>
           </tr>
@@ -86,6 +123,36 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
                 {speaker.jobTitle && <div className="text-gray-500 text-xs">{speaker.jobTitle}</div>}
               </td>
               <td className="py-4">{getStatusBadge(speaker.submissionStatus)}</td>
+              <td className="py-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleCopyLink(speaker)}
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
+                    title="Copy portal link"
+                  >
+                    {copiedSpeakerId === speaker.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        Copy Link
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={getPortalLink(speaker.accessToken)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-gray-600"
+                    title="Open portal in new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </td>
               <td className="py-4 text-gray-600">
                 {format(new Date(speaker.invitedAt), 'MMM d, yyyy')}
               </td>
@@ -100,11 +167,7 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
                     <Mail className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this speaker?')) {
-                        deleteMutation.mutate(speaker.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteClick(speaker)}
                     disabled={deleteMutation.isPending}
                     className="text-red-600 hover:text-red-700 disabled:opacity-50"
                     title="Delete speaker"
@@ -117,6 +180,21 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
           ))}
         </tbody>
       </table>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSpeakerToDelete(null);
+        }}
+        onConfirm={handleDelete}
+        title="Delete Speaker?"
+        message={`Are you sure you want to delete ${speakerToDelete?.name}? This will permanently remove the speaker and all their submissions from this event.`}
+        confirmText="Delete Speaker"
+        isDangerous
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

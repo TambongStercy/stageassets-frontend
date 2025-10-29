@@ -131,6 +131,196 @@ axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
 ---
 
+#### 4. Google OAuth Login
+
+The backend supports Google OAuth authentication. Users can sign in with their Google account, and the backend will create a user account automatically if one doesn't exist.
+
+**Flow:**
+1. User clicks "Sign in with Google" button
+2. Frontend redirects to backend OAuth endpoint
+3. User grants permissions on Google consent screen
+4. Google redirects back to backend callback
+5. Backend creates/updates user and redirects to frontend with JWT token
+
+---
+
+**Step 1: Initiate Google OAuth**
+
+```typescript
+// On button click, redirect user to:
+window.location.href = 'http://localhost:3000/api/auth/google';
+```
+
+This will redirect the user to Google's consent screen where they'll authorize your app.
+
+---
+
+**Step 2: Handle Callback**
+
+After the user authorizes, Google will redirect to:
+```
+http://localhost:3000/api/auth/google/callback
+```
+
+The backend will then redirect to your frontend with the token:
+```
+http://localhost:5174/auth/google/callback?token=<jwt_token>
+```
+
+**Frontend Implementation:**
+
+Create a callback page at `/auth/google/callback` in your React app:
+
+```typescript
+// pages/GoogleCallback.tsx or similar
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+export default function GoogleCallback() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+
+    if (token) {
+      // Store the token
+      localStorage.setItem('token', token);
+
+      // Set axios default header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Fetch user profile
+      axios.get('http://localhost:3000/api/auth/me')
+        .then(response => {
+          // Store user data in your state management (Redux, Context, etc.)
+          console.log('User:', response.data);
+
+          // Redirect to dashboard
+          navigate('/dashboard');
+        })
+        .catch(error => {
+          console.error('Failed to get user:', error);
+          navigate('/login');
+        });
+    } else {
+      // No token received, redirect to login
+      navigate('/login');
+    }
+  }, [searchParams, navigate]);
+
+  return (
+    <div>
+      <h2>Signing you in...</h2>
+      <p>Please wait while we complete your Google sign-in.</p>
+    </div>
+  );
+}
+```
+
+---
+
+**Complete Example: Login Component with Google OAuth**
+
+```typescript
+// components/LoginForm.tsx
+import { useState } from 'react';
+import axios from 'axios';
+
+export default function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/login', {
+        email,
+        password,
+      });
+
+      // Store token
+      localStorage.setItem('token', response.data.token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Invalid credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // Redirect to backend Google OAuth endpoint
+    window.location.href = 'http://localhost:3000/api/auth/google';
+  };
+
+  return (
+    <div>
+      <h2>Sign In</h2>
+
+      {/* Email/Password Login */}
+      <form onSubmit={handleEmailLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </button>
+      </form>
+
+      <div>--- OR ---</div>
+
+      {/* Google OAuth Button */}
+      <button onClick={handleGoogleLogin}>
+        <img src="/google-icon.svg" alt="Google" />
+        Sign in with Google
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+**Important Notes:**
+
+1. **No Password Required**: Users who sign up via Google OAuth don't have a password in the database. They can only log in using Google OAuth.
+
+2. **Email Verified**: Google OAuth users automatically have `isEmailVerified: true` since Google verifies emails.
+
+3. **Account Linking**: If a user registers with email/password first, then later tries to sign in with Google using the same email, they will be logged into the existing account.
+
+4. **Environment Variables**: The backend uses these environment variables for Google OAuth:
+   - `GOOGLE_CLIENT_ID`: Your Google OAuth client ID
+   - `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret
+   - `GOOGLE_CALLBACK_URL`: http://localhost:3000/api/auth/google/callback
+   - `FRONTEND_URL`: Where to redirect after authentication (http://localhost:5174)
+
+5. **Production Setup**: In production, update:
+   - `GOOGLE_CALLBACK_URL` to your production backend URL
+   - `FRONTEND_URL` to your production frontend URL
+   - Update authorized redirect URIs in Google Cloud Console
+
+---
+
 ## 🎪 Events Management
 
 ### Overview
