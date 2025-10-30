@@ -166,45 +166,45 @@ export default function EventDetailsPage() {
           Back to Events
         </button>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-start gap-4 flex-1">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
               {/* Event Logo */}
               {event.logoUrl ? (
                 <img
                   src={getFileUrl(event.logoUrl)!}
                   alt={`${event.name} logo`}
-                  className="w-16 h-16 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-xl object-cover border border-gray-200 flex-shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-8 h-8 text-gray-400" />
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 md:w-8 md:h-8 text-gray-400" />
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
+                <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{event.name}</h1>
                   {event.isArchived && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs flex-shrink-0">
                       Archived
                     </Badge>
                   )}
                 </div>
                 {event.description && (
-                  <p className="text-sm text-gray-600 mb-3">{event.description}</p>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
                 )}
 
                 {/* Quick Info */}
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 md:gap-4 text-sm flex-wrap">
                   {event.eventDate && (
                     <div className="flex items-center gap-1.5 text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      <span>{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
+                      <Clock className="w-4 h-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
                     </div>
                   )}
                   <div
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium flex-shrink-0 ${
                       isOverdue
                         ? 'bg-red-50 text-red-600'
                         : daysUntilDeadline <= 3
@@ -212,8 +212,8 @@ export default function EventDetailsPage() {
                         : 'bg-emerald-50 text-emerald-600'
                     }`}
                   >
-                    <Clock className="w-3.5 h-3.5" />
-                    <span className="text-xs">
+                    <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="text-xs whitespace-nowrap">
                       {isOverdue
                         ? 'Deadline passed'
                         : `${daysUntilDeadline}d until deadline`}
@@ -224,40 +224,40 @@ export default function EventDetailsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
               <Button
                 onClick={handleDownloadAllAssets}
                 disabled={!stats || stats.assets.received === 0}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Download All Assets
+                <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Download All</span>
                 {stats && stats.assets.received > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                  <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs flex-shrink-0">
                     {stats.assets.received}
                   </span>
                 )}
               </Button>
               {!event.isArchived && (
-                <>
+                <div className="flex gap-2">
                   <Button
                     onClick={() => navigate(`/events/${eventId}/edit`)}
                     variant="secondary"
-                    className="shadow-sm"
+                    className="shadow-sm flex-1 sm:flex-initial"
                   >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit
+                    <Edit3 className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+                    <span className="hidden sm:inline">Edit</span>
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => setIsArchiveModalOpen(true)}
                     disabled={archiveMutation.isPending}
-                    className="shadow-sm"
+                    className="shadow-sm flex-1 sm:flex-initial"
                   >
-                    <Archive className="w-4 h-4 mr-2" />
-                    Archive
+                    <Archive className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+                    <span className="hidden sm:inline">Archive</span>
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -383,19 +383,19 @@ export default function EventDetailsPage() {
 
       {/* Tabs */}
       <div ref={tabsSectionRef} className="bg-white border border-gray-200 rounded-xl mb-6">
-        <div className="flex items-center gap-1 p-2 border-b border-gray-200">
+        <div className="flex items-center gap-1 p-2 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('speakers')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'speakers'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <Users className="w-4 h-4" />
-            Speakers
+            <Users className="w-4 h-4 flex-shrink-0" />
+            <span>Speakers</span>
             {stats && stats.speakers.total > 0 && (
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+              <span className={`px-2 py-0.5 rounded-full text-xs flex-shrink-0 ${
                 activeTab === 'speakers'
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-gray-100 text-gray-600'
@@ -406,36 +406,36 @@ export default function EventDetailsPage() {
           </button>
           <button
             onClick={() => setActiveTab('assets')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'assets'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            Assets
+            <FileText className="w-4 h-4 flex-shrink-0" />
+            <span>Assets</span>
           </button>
           <button
             onClick={() => setActiveTab('reminders')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'reminders'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <Bell className="w-4 h-4" />
-            Reminders
+            <Bell className="w-4 h-4 flex-shrink-0" />
+            <span>Reminders</span>
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'settings'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <Settings className="w-4 h-4" />
-            Settings
+            <Settings className="w-4 h-4 flex-shrink-0" />
+            <span>Settings</span>
           </button>
         </div>
 

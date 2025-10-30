@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:stagetimer.io)",
-      "WebSearch"
+      "WebSearch",
+      "Read(//c/Users/LENOVO/Desktop/projects/Saas/stageasset-backend/src/**)",
+      "Read(//c/Users/LENOVO/Desktop/projects/Saas/stageasset-backend/**)"
     ],
     "deny": [],
     "ask": []

@@ -7,7 +7,9 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { assetRequirementsService } from '../services/asset-requirements.service';
 import type {
   AssetType,
+  AssetRequirement,
   CreateAssetRequirementData,
+  UpdateAssetRequirementData,
 } from '../types/asset-requirements.types';
 
 interface AssetRequirementsManagerProps {
@@ -27,6 +29,7 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [requirementToDelete, setRequirementToDelete] = useState<{ id: number; label: string } | null>(null);
+  const [editingRequirement, setEditingRequirement] = useState<AssetRequirement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
@@ -59,6 +62,21 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
     },
   });
 
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ requirementId, data }: { requirementId: number; data: UpdateAssetRequirementData }) =>
+      assetRequirementsService.updateAssetRequirement(eventId, requirementId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['asset-requirements', eventId] });
+      resetForm();
+      setIsModalOpen(false);
+      setEditingRequirement(null);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.message || 'Failed to update asset requirement');
+    },
+  });
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (requirementId: number) =>
@@ -78,13 +96,32 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
     setMinImageWidth(undefined);
     setMinImageHeight(undefined);
     setError(null);
+    setEditingRequirement(null);
+  };
+
+  const loadFormData = (requirement: AssetRequirement) => {
+    setAssetType(requirement.assetType);
+    setLabel(requirement.label);
+    setDescription(requirement.description || '');
+    setIsRequired(requirement.isRequired);
+    setAcceptedFileTypes(requirement.acceptedFileTypes?.join(',') || '.jpg,.png');
+    setMaxFileSizeMb(requirement.maxFileSizeMb || 5);
+    setMinImageWidth(requirement.minImageWidth || undefined);
+    setMinImageHeight(requirement.minImageHeight || undefined);
+    setError(null);
+  };
+
+  const handleEditClick = (requirement: AssetRequirement) => {
+    setEditingRequirement(requirement);
+    loadFormData(requirement);
+    setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const data: CreateAssetRequirementData = {
+    const data = {
       assetType,
       label,
       description: description || undefined,
@@ -93,10 +130,19 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
       maxFileSizeMb,
       minImageWidth,
       minImageHeight,
-      sortOrder: (requirements?.length || 0) + 1,
+      sortOrder: editingRequirement?.sortOrder || (requirements?.length || 0) + 1,
     };
 
-    createMutation.mutate(data);
+    if (editingRequirement) {
+      // Update existing requirement
+      updateMutation.mutate({
+        requirementId: editingRequirement.id,
+        data,
+      });
+    } else {
+      // Create new requirement
+      createMutation.mutate(data);
+    }
   };
 
   const handleDeleteClick = (requirementId: number, requirementLabel: string) => {
@@ -110,6 +156,11 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
       setIsDeleteModalOpen(false);
       setRequirementToDelete(null);
     }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    resetForm();
   };
 
   return (
@@ -137,13 +188,13 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
           {requirements.map((req) => (
             <div
               key={req.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between"
+              className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between hover:border-emerald-300 transition-colors"
             >
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-1">
                 <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
                   <FileText className="w-5 h-5 text-emerald-700" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium text-gray-900">{req.label}</h4>
                     {req.isRequired && (
@@ -171,12 +222,22 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => handleDeleteClick(req.id, req.label)}
-                className="text-gray-400 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2 ml-4">
+                <button
+                  onClick={() => handleEditClick(req)}
+                  className="text-gray-400 hover:text-emerald-600 transition-colors p-2"
+                  aria-label="Edit requirement"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(req.id, req.label)}
+                  className="text-gray-400 hover:text-red-600 transition-colors p-2"
+                  aria-label="Delete requirement"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -194,14 +255,11 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* Create/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          resetForm();
-        }}
-        title="Add Asset Requirement"
+        onClose={handleModalClose}
+        title={editingRequirement ? 'Edit Asset Requirement' : 'Add Asset Requirement'}
         size="lg"
       >
         {error && (
@@ -376,28 +434,34 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
           <div className="flex gap-3 pt-4 border-t">
             <Button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
               className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white shadow-md hover:shadow-lg transition-all"
             >
-              {createMutation.isPending ? (
+              {(createMutation.isPending || updateMutation.isPending) ? (
                 <>
                   <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                  Creating...
+                  {editingRequirement ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Requirement
+                  {editingRequirement ? (
+                    <>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Update Requirement
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Requirement
+                    </>
+                  )}
                 </>
               )}
             </Button>
             <Button
               type="button"
               variant="secondary"
-              onClick={() => {
-                setIsModalOpen(false);
-                resetForm();
-              }}
+              onClick={handleModalClose}
               className="flex-1"
             >
               Cancel

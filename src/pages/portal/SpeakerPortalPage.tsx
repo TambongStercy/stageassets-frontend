@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Upload, User, CheckCircle, AlertCircle, ExternalLink, Download, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Upload, User, CheckCircle, AlertCircle, ExternalLink, Download, Clock, ChevronDown, ChevronUp, History, RefreshCw, X } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { FileUpload } from '../../components/FileUpload';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { SessionTimeoutWarning } from '../../components/SessionTimeoutWarning';
 import { Button, Container, Card, CardContent } from '../../components/ui';
 import { portalService } from '../../services/portal.service';
 import { submissionsService } from '../../services/submissions.service';
 import { assetRequirementsService } from '../../services/asset-requirements.service';
 import { eventsService } from '../../services/events.service';
 import { getFileUrl } from '../../lib/file-url';
+import { useSessionTimeout } from '../../hooks/useSessionTimeout';
 
 export default function SpeakerPortalPage() {
   const { accessToken } = useParams<{ accessToken: string }>();
   const queryClient = useQueryClient();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [uploadingNewVersion, setUploadingNewVersion] = useState<number | null>(null);
+  const [viewingVersionHistory, setViewingVersionHistory] = useState<number | null>(null);
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
@@ -87,7 +91,20 @@ export default function SpeakerPortalPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['submissions', speaker?.id] });
+      setUploadingNewVersion(null); // Close upload form after success
     },
+  });
+
+  // Get version history - single query for the currently viewing requirement
+  const { data: versionHistory, isLoading: versionHistoryLoading } = useQuery({
+    queryKey: ['version-history', speaker?.id, viewingVersionHistory],
+    queryFn: () => {
+      if (!speaker?.id || !viewingVersionHistory) {
+        return Promise.resolve([]);
+      }
+      return submissionsService.getVersionHistory(speaker.id, viewingVersionHistory);
+    },
+    enabled: !!speaker && !!viewingVersionHistory,
   });
 
   // Helper to check if a requirement has been fulfilled
@@ -103,6 +120,25 @@ export default function SpeakerPortalPage() {
       (sub) => sub.assetRequirementId === requirementId && sub.isLatest
     );
   };
+
+  // Session timeout warning
+  const {
+    showWarning: showSessionWarning,
+    formatTimeRemaining,
+    extendSession,
+    isExtending,
+    dismissWarning,
+  } = useSessionTimeout({
+    warningTime: 25 * 60 * 1000, // 25 minutes
+    expiryTime: 30 * 60 * 1000, // 30 minutes
+    onExpire: () => {
+      window.location.reload();
+    },
+    onExtend: async () => {
+      // Refresh the speaker data to extend session
+      await queryClient.invalidateQueries({ queryKey: ['speaker-portal', accessToken] });
+    },
+  });
 
   if (speakerLoading) {
     return <LoadingSpinner fullScreen />;
@@ -166,17 +202,25 @@ export default function SpeakerPortalPage() {
               </div>
             </div>
             {totalRequirements > 0 && (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2" role="status" aria-label="Upload progress">
                 <div className="text-right">
                   <p className="text-xs text-gray-500">Progress</p>
                   <p
                     className="text-sm font-semibold"
                     style={{ color: event?.brandColor || '#059669' }}
+                    aria-label={`${completedRequirements} of ${totalRequirements} assets completed`}
                   >
                     {completedRequirements}/{totalRequirements}
                   </p>
                 </div>
-                <div className="w-24 bg-gray-200 rounded-full h-2">
+                <div
+                  className="w-24 bg-gray-200 rounded-full h-2"
+                  role="progressbar"
+                  aria-valuenow={progressPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${progressPercent}% complete`}
+                >
                   <div
                     className="h-2 rounded-full transition-all duration-500"
                     style={{
@@ -330,6 +374,23 @@ export default function SpeakerPortalPage() {
               </div>
             </Card>
           )}
+
+          {/* Reassurance Message */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-emerald-50 border-2 border-blue-200 rounded-lg shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 mb-1">Your Access Link is Secure</h4>
+                <p className="text-sm text-gray-700">
+                  This link will remain active until the submission deadline{event && ` (${format(new Date(event.deadline), 'MMM d, yyyy')})`}.
+                  You can safely bookmark this page and return anytime to upload or update your assets.
+                  Your progress is automatically saved.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Status Badges */}
           {speaker.submissionStatus === 'complete' ? (
@@ -537,13 +598,13 @@ export default function SpeakerPortalPage() {
                               </span>
                               <h3 className="font-bold text-gray-900 text-lg">{requirement.label}</h3>
                               {requirement.isRequired && (
-                                <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                                <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full" role="status" aria-label="This asset is required">
                                   Required
                                 </span>
                               )}
                               {isFulfilled && (
-                                <div className="flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">
-                                  <CheckCircle className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full" role="status" aria-label="Asset completed">
+                                  <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>Completed</span>
                                 </div>
                               )}
@@ -570,59 +631,191 @@ export default function SpeakerPortalPage() {
 
                       {isFulfilled && submission ? (
                         <div className="space-y-3">
-                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <FileText className="w-5 h-5 text-emerald-600" />
-                                <div>
-                                  <p className="text-sm font-medium text-emerald-900">
-                                    {submission.fileName}
-                                  </p>
-                                  <p className="text-xs text-emerald-700">
-                                    Uploaded {format(new Date(submission.uploadedAt), 'MMM d, yyyy')}
-                                  </p>
+                          {/* Current Version Display */}
+                          {uploadingNewVersion !== requirement.id && (
+                            <>
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-3">
+                                    <FileText className="w-5 h-5 text-emerald-600" />
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-emerald-900">
+                                          {submission.fileName}
+                                        </p>
+                                        {submission.version > 1 && (
+                                          <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                                            v{submission.version}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-emerald-700">
+                                        Uploaded {format(new Date(submission.uploadedAt || submission.createdAt), 'MMM d, yyyy h:mm a')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-200">
+                                  <button
+                                    onClick={() => setUploadingNewVersion(requirement.id)}
+                                    className="inline-flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-white border border-emerald-300 rounded-md hover:bg-emerald-50 transition-colors font-medium"
+                                  >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Upload New Version
+                                  </button>
+                                  {submission.version > 1 && (
+                                    <button
+                                      onClick={() => setViewingVersionHistory(
+                                        viewingVersionHistory === requirement.id ? null : requirement.id
+                                      )}
+                                      className="inline-flex items-center gap-2 px-3 py-2 text-sm text-purple-700 bg-white border border-purple-300 rounded-md hover:bg-purple-50 transition-colors font-medium min-h-[44px]"
+                                      aria-expanded={viewingVersionHistory === requirement.id}
+                                      aria-controls={`version-history-${requirement.id}`}
+                                      aria-label={viewingVersionHistory === requirement.id ? 'Hide version history' : 'View version history'}
+                                    >
+                                      <History className="w-4 h-4" aria-hidden="true" />
+                                      {viewingVersionHistory === requirement.id ? 'Hide History' : 'View History'}
+                                    </button>
+                                  )}
+                                  <a
+                                    href={getFileUrl(submission.fileUrl)!}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                    View File
+                                  </a>
+                                  <a
+                                    href={getFileUrl(submission.fileUrl)!}
+                                    download={submission.fileName}
+                                    className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                    Download
+                                  </a>
                                 </div>
                               </div>
-                              <CheckCircle className="w-5 h-5 text-emerald-600" />
-                            </div>
-                          </div>
 
-                          {/* File Preview/Link */}
-                          {submission.fileUrl && (
-                            <div className="flex flex-wrap gap-2">
-                              <a
-                                href={getFileUrl(submission.fileUrl)!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-white border border-emerald-200 rounded-md hover:bg-emerald-50 transition-colors"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                View File
-                              </a>
-                              <a
-                                href={getFileUrl(submission.fileUrl)!}
-                                download={submission.fileName}
-                                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-white border border-emerald-200 rounded-md hover:bg-emerald-50 transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                                Download
-                              </a>
-                            </div>
+                              {/* Image Preview for image files */}
+                              {submission.fileUrl &&
+                                submission.mimeType?.startsWith('image/') &&
+                                submission.imageWidth &&
+                                submission.imageHeight && (
+                                  <div className="rounded-md overflow-hidden border border-emerald-200">
+                                    <img
+                                      src={getFileUrl(submission.fileUrl)!}
+                                      alt={submission.fileName}
+                                      className="w-full h-auto max-h-64 object-contain bg-gray-50"
+                                    />
+                                  </div>
+                                )}
+
+                              {/* Version History */}
+                              {viewingVersionHistory === requirement.id && (
+                                versionHistoryLoading ? (
+                                  <div
+                                    id={`version-history-${requirement.id}`}
+                                    className="p-4 bg-purple-50 border border-purple-200 rounded-md text-center"
+                                    role="status"
+                                    aria-label="Loading version history"
+                                  >
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+                                  </div>
+                                ) : versionHistory && versionHistory.length > 0 ? (
+                                  <div
+                                    id={`version-history-${requirement.id}`}
+                                    className="p-4 bg-purple-50 border border-purple-200 rounded-md"
+                                    role="region"
+                                    aria-label="Version history"
+                                  >
+                                    <h4 className="text-sm font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                                      <History className="w-4 h-4" aria-hidden="true" />
+                                      Version History ({versionHistory.length} {versionHistory.length === 1 ? 'version' : 'versions'})
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {versionHistory.map((version) => (
+                                        <div
+                                          key={version.id}
+                                          className={`p-3 rounded-md border ${
+                                            version.isLatest
+                                              ? 'bg-white border-purple-300'
+                                              : 'bg-purple-100/50 border-purple-200'
+                                          }`}
+                                        >
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                                                  v{version.version}
+                                                </span>
+                                                {version.isLatest && (
+                                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                                                    Current
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <p className="text-sm font-medium text-gray-900">{version.fileName}</p>
+                                              <p className="text-xs text-gray-600 mt-1">
+                                                {format(new Date(version.uploadedAt || version.createdAt), 'MMM d, yyyy h:mm a')}
+                                              </p>
+                                            </div>
+                                            {!version.isLatest && (
+                                              <a
+                                                href={getFileUrl(version.fileUrl)!}
+                                                download={version.fileName}
+                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-purple-700 bg-white border border-purple-300 rounded hover:bg-purple-50 transition-colors"
+                                              >
+                                                <Download className="w-3 h-3" />
+                                                Download
+                                              </a>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null
+                              )}
+                            </>
                           )}
 
-                          {/* Image Preview for image files */}
-                          {submission.fileUrl &&
-                            submission.mimeType?.startsWith('image/') &&
-                            submission.imageWidth &&
-                            submission.imageHeight && (
-                              <div className="rounded-md overflow-hidden border border-emerald-200">
-                                <img
-                                  src={getFileUrl(submission.fileUrl)!}
-                                  alt={submission.fileName}
-                                  className="w-full h-auto max-h-64 object-contain bg-gray-50"
+                          {/* Upload New Version Form */}
+                          {uploadingNewVersion === requirement.id && (
+                            <div className="space-y-3">
+                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <h4 className="text-sm font-semibold text-blue-900 mb-1">Upload New Version</h4>
+                                    <p className="text-xs text-blue-700">
+                                      This will create version {(submission.version || 1) + 1}. Previous versions will be saved in history.
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => setUploadingNewVersion(null)}
+                                    className="text-blue-700 hover:text-blue-900"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <FileUpload
+                                  onUploadComplete={(fileData) =>
+                                    createSubmissionMutation.mutate({
+                                      ...fileData,
+                                      assetRequirementId: requirement.id,
+                                    })
+                                  }
+                                  accept={requirement.acceptedFileTypes?.join(',')}
+                                  maxSizeMB={requirement.maxFileSizeMb || 10}
+                                  minImageWidth={requirement.minImageWidth}
+                                  minImageHeight={requirement.minImageHeight}
                                 />
                               </div>
-                            )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <FileUpload
@@ -634,6 +827,8 @@ export default function SpeakerPortalPage() {
                           }
                           accept={requirement.acceptedFileTypes?.join(',')}
                           maxSizeMB={requirement.maxFileSizeMb || 10}
+                          minImageWidth={requirement.minImageWidth}
+                          minImageHeight={requirement.minImageHeight}
                         />
                       )}
                     </CardContent>
@@ -659,6 +854,16 @@ export default function SpeakerPortalPage() {
           )}
         </Container>
       </main>
+
+      {/* Session Timeout Warning */}
+      {showSessionWarning && (
+        <SessionTimeoutWarning
+          timeRemaining={formatTimeRemaining()}
+          onExtend={extendSession}
+          onDismiss={dismissWarning}
+          isExtending={isExtending}
+        />
+      )}
     </div>
   );
 }
