@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Clock, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calendar, Users, Clock, FileText, AlertCircle, CheckCircle2, Archive, ArchiveRestore } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import type { Event, EventStats } from '../types/event.types';
 import { Badge } from './ui';
@@ -9,9 +9,17 @@ interface EventCardProps {
   event: Event;
   stats?: EventStats;
   viewMode?: 'grid' | 'list';
+  onArchiveToggle?: (eventId: number, isArchived: boolean) => void;
 }
 
-export function EventCard({ event, stats, viewMode = 'grid' }: EventCardProps) {
+export function EventCard({ event, stats, viewMode = 'grid', onArchiveToggle }: EventCardProps) {
+  const handleArchiveClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onArchiveToggle) {
+      onArchiveToggle(event.id, !event.isArchived);
+    }
+  };
   const deadlineDate = new Date(event.deadline);
   const isOverdue = deadlineDate < new Date();
   const daysUntilDeadline = differenceInDays(deadlineDate, new Date());
@@ -86,13 +94,13 @@ export function EventCard({ event, stats, viewMode = 'grid' }: EventCardProps) {
               {stats && (
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <div className="text-xs text-gray-500 mb-0.5">Speakers</div>
-                    <div className="text-sm font-semibold text-gray-900">{stats.totalSpeakers}</div>
+                    <div className="text-xs text-gray-500 mb-0.5">Assets</div>
+                    <div className="text-sm font-semibold text-gray-900">{stats.assets.received}/{stats.assets.expected}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-gray-500 mb-0.5">Progress</div>
                     <div className="text-sm font-semibold text-emerald-600">
-                      {stats.completionRate}%
+                      {stats.assets.progress}%
                     </div>
                   </div>
                 </div>
@@ -120,10 +128,28 @@ export function EventCard({ event, stats, viewMode = 'grid' }: EventCardProps) {
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div
                       className="bg-emerald-600 h-1.5 rounded-full transition-all"
-                      style={{ width: `${stats.completionRate}%` }}
+                      style={{ width: `${stats.assets.progress}%` }}
                     ></div>
                   </div>
                 </div>
+              )}
+
+              {onArchiveToggle && (
+                <button
+                  onClick={handleArchiveClick}
+                  className={`p-1.5 rounded-lg transition-all ml-auto ${
+                    event.isArchived
+                      ? 'text-emerald-600 hover:bg-emerald-50'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                  title={event.isArchived ? 'Restore event' : 'Archive event'}
+                >
+                  {event.isArchived ? (
+                    <ArchiveRestore className="w-4 h-4" />
+                  ) : (
+                    <Archive className="w-4 h-4" />
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -177,19 +203,19 @@ export function EventCard({ event, stats, viewMode = 'grid' }: EventCardProps) {
             <div className="flex items-center gap-1.5 text-gray-600">
               <Users className="w-4 h-4" />
               <span className="font-medium">
-                {stats.completedSpeakers}/{stats.totalSpeakers}
+                {stats.assets.received}/{stats.assets.expected}
               </span>
-              <span className="text-gray-500">speakers</span>
+              <span className="text-gray-500">assets</span>
             </div>
             <span className="text-sm font-semibold text-emerald-600">
-              {stats.completionRate}%
+              {stats.assets.progress}%
             </span>
           </div>
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all"
-              style={{ width: `${stats.completionRate}%` }}
+              style={{ width: `${stats.assets.progress}%` }}
             ></div>
           </div>
         </div>
@@ -197,18 +223,37 @@ export function EventCard({ event, stats, viewMode = 'grid' }: EventCardProps) {
 
       {/* Footer Meta */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100">
-        {event.eventDate && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
+        <div className="flex items-center gap-2 flex-1">
+          {event.eventDate && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
+            </div>
+          )}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${deadlineStatus.bgColor} ${deadlineStatus.color}`}
+          >
+            <DeadlineIcon className="w-3.5 h-3.5" />
+            <span>{deadlineStatus.text}</span>
           </div>
-        )}
-        <div
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${deadlineStatus.bgColor} ${deadlineStatus.color}`}
-        >
-          <DeadlineIcon className="w-3.5 h-3.5" />
-          <span>{deadlineStatus.text}</span>
         </div>
+        {onArchiveToggle && (
+          <button
+            onClick={handleArchiveClick}
+            className={`p-1.5 rounded-lg transition-all ${
+              event.isArchived
+                ? 'text-emerald-600 hover:bg-emerald-50'
+                : 'text-gray-500 hover:bg-gray-100'
+            }`}
+            title={event.isArchived ? 'Restore event' : 'Archive event'}
+          >
+            {event.isArchived ? (
+              <ArchiveRestore className="w-4 h-4" />
+            ) : (
+              <Archive className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </div>
     </Link>
   );

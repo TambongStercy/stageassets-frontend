@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -15,22 +15,25 @@ import {
   CheckCircle2,
   Clock,
   MoreVertical,
+  Download,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { InviteSpeakerModal } from '../../components/InviteSpeakerModal';
-import { EditEventModal } from '../../components/EditEventModal';
 import { SpeakerTable } from '../../components/SpeakerTable';
 import { AssetRequirementsManager } from '../../components/AssetRequirementsManager';
+import { SubmissionsGallery } from '../../components/SubmissionsGallery';
 import { RemindersManager } from '../../components/RemindersManager';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 import { SubscriptionGateModal } from '../../components/SubscriptionGateModal';
+import { SetupProgressChecklist } from '../../components/SetupProgressChecklist';
 import { StatsCardSkeleton, TableRowSkeleton } from '../../components/Skeleton';
 import { Button, Card, CardContent, Badge } from '../../components/ui';
 import { useSubscriptionGate } from '../../hooks/useSubscriptionGate';
 import { eventsService } from '../../services/events.service';
 import { speakersService } from '../../services/speakers.service';
+import { submissionsService } from '../../services/submissions.service';
 import { getFileUrl } from '../../lib/file-url';
 
 export default function EventDetailsPage() {
@@ -40,10 +43,20 @@ export default function EventDetailsPage() {
   const eventId = parseInt(id!, 10);
 
   const [activeTab, setActiveTab] = useState<'speakers' | 'assets' | 'reminders' | 'settings'>('speakers');
+  const [assetsSubTab, setAssetsSubTab] = useState<'submissions' | 'requirements'>('submissions');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+
+  // Ref for scrolling to tabs section
+  const tabsSectionRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to scroll to tabs section smoothly
+  const scrollToTabs = () => {
+    setTimeout(() => {
+      tabsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   // Subscription gate hook
   const { isGateOpen, gateFeature, gateMessage, checkSpeakerLimit, closeGate } = useSubscriptionGate();
@@ -60,11 +73,44 @@ export default function EventDetailsPage() {
     queryFn: () => speakersService.getSpeakers(eventId),
   });
 
+  // Fetch asset requirements (for progress checklist)
+  const { data: assetRequirements } = useQuery({
+    queryKey: ['asset-requirements', eventId],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/events/${eventId}/asset-requirements`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      return response.json();
+    },
+  });
+
   // Fetch stats
   const { data: stats } = useQuery({
     queryKey: ['event-stats', eventId],
     queryFn: () => eventsService.getEventStats(eventId),
   });
+
+  // Fetch submissions for download functionality
+  const { data: submissions } = useQuery({
+    queryKey: ['submissions', eventId],
+    queryFn: () => submissionsService.getEventSubmissions(eventId),
+  });
+
+  // Download all assets handler
+  const handleDownloadAllAssets = async () => {
+    if (!event || !stats || stats.assets.received === 0) {
+      return;
+    }
+
+    try {
+      await eventsService.downloadEventAssets(eventId, event.name);
+    } catch (error) {
+      console.error('Failed to download assets:', error);
+      alert('Failed to download assets. Please try again.');
+    }
+  };
 
   // Archive mutation
   const archiveMutation = useMutation({
@@ -179,10 +225,23 @@ export default function EventDetailsPage() {
 
             {/* Action Buttons */}
             <div className="flex gap-2 flex-shrink-0">
+              <Button
+                onClick={handleDownloadAllAssets}
+                disabled={!stats || stats.assets.received === 0}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download All Assets
+                {stats && stats.assets.received > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                    {stats.assets.received}
+                  </span>
+                )}
+              </Button>
               {!event.isArchived && (
                 <>
                   <Button
-                    onClick={() => setIsEditModalOpen(true)}
+                    onClick={() => navigate(`/events/${eventId}/edit`)}
                     variant="secondary"
                     className="shadow-sm"
                   >
@@ -205,14 +264,45 @@ export default function EventDetailsPage() {
         </div>
       </div>
 
+      {/* Setup Progress Checklist */}
+      {!event.isArchived && (
+        <div className="mb-6">
+          <SetupProgressChecklist
+            hasAssets={Array.isArray(assetRequirements) && assetRequirements.length > 0}
+            hasSpeakers={Array.isArray(speakers) && speakers.length > 0}
+            onInviteSpeakers={() => {
+              setIsInviteModalOpen(true);
+              setActiveTab('speakers');
+              scrollToTabs();
+            }}
+            onSetupAssets={() => {
+              setActiveTab('assets');
+              scrollToTabs();
+            }}
+            onViewPortal={() => {
+              if (speakers && speakers.length > 0) {
+                window.open(`/portal/speakers/${speakers[0].accessToken}`, '_blank');
+              }
+            }}
+            hideWhenComplete={true}
+          />
+        </div>
+      )}
+
       {/* Stats Cards */}
-      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid lg:grid-cols-4 gap-4 mb-6">
+        {/* Speakers Stats */}
         <Card>
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Speakers</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalSpeakers || 0}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.speakers.total || 0}</p>
+                <div className="flex gap-2 mt-2 text-xs">
+                  <span className="text-emerald-600 font-medium">{stats?.speakers.completed || 0} done</span>
+                  <span className="text-amber-600 font-medium">{stats?.speakers.partial || 0} partial</span>
+                  <span className="text-gray-500">{stats?.speakers.pending || 0} pending</span>
+                </div>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -221,51 +311,70 @@ export default function EventDetailsPage() {
           </CardContent>
         </Card>
 
+        {/* Asset Types Stats */}
         <Card>
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-3xl font-bold text-emerald-600 mt-2">
-                  {stats?.completedSpeakers || 0}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Asset Types</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.assetTypes.total || 0}</p>
+                <div className="flex gap-2 mt-2 text-xs">
+                  <span className="text-red-600 font-medium">{stats?.assetTypes.required || 0} required</span>
+                  <span className="text-gray-500">{stats?.assetTypes.optional || 0} optional</span>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Assets Progress */}
         <Card>
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <p className="text-3xl font-bold text-gray-900">{stats?.completionRate || 0}%</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Assets Progress</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats?.assets.received || 0}/{stats?.assets.expected || 0}
+                </p>
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600">{stats?.assets.progress || 0}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
+                      style={{ width: `${stats?.assets.progress || 0}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="w-16">
-                <svg className="w-full h-full" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="3"
-                    strokeDasharray={`${stats?.completionRate || 0}, 100`}
-                  />
-                </svg>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Required Assets */}
+        <Card>
+          <CardContent className="pt-5 pb-5">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Required Assets</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats?.requiredAssets.received || 0}/{stats?.requiredAssets.expected || 0}
+                </p>
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600">{stats?.requiredAssets.progress || 0}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-300"
+                      style={{ width: `${stats?.requiredAssets.progress || 0}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -273,7 +382,7 @@ export default function EventDetailsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border border-gray-200 rounded-xl mb-6">
+      <div ref={tabsSectionRef} className="bg-white border border-gray-200 rounded-xl mb-6">
         <div className="flex items-center gap-1 p-2 border-b border-gray-200">
           <button
             onClick={() => setActiveTab('speakers')}
@@ -285,13 +394,13 @@ export default function EventDetailsPage() {
           >
             <Users className="w-4 h-4" />
             Speakers
-            {stats && stats.totalSpeakers > 0 && (
+            {stats && stats.speakers.total > 0 && (
               <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
                 activeTab === 'speakers'
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-gray-100 text-gray-600'
               }`}>
-                {stats.totalSpeakers}
+                {stats.speakers.total}
               </span>
             )}
           </button>
@@ -385,7 +494,37 @@ export default function EventDetailsPage() {
             </div>
           )}
 
-          {activeTab === 'assets' && <AssetRequirementsManager eventId={eventId} />}
+          {activeTab === 'assets' && (
+            <div>
+              {/* Assets Sub-Tabs */}
+              <div className="flex gap-2 mb-6 border-b border-gray-200">
+                <button
+                  onClick={() => setAssetsSubTab('submissions')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    assetsSubTab === 'submissions'
+                      ? 'border-emerald-600 text-emerald-700'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Submitted Assets
+                </button>
+                <button
+                  onClick={() => setAssetsSubTab('requirements')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    assetsSubTab === 'requirements'
+                      ? 'border-emerald-600 text-emerald-700'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Requirements Setup
+                </button>
+              </div>
+
+              {/* Assets Sub-Tab Content */}
+              {assetsSubTab === 'submissions' && <SubmissionsGallery eventId={eventId} />}
+              {assetsSubTab === 'requirements' && <AssetRequirementsManager eventId={eventId} />}
+            </div>
+          )}
 
           {activeTab === 'reminders' && <RemindersManager eventId={eventId} />}
 
@@ -440,13 +579,6 @@ export default function EventDetailsPage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         eventId={eventId}
-      />
-
-      {/* Edit Modal */}
-      <EditEventModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        event={event}
       />
 
       {/* Archive Confirmation Modal */}

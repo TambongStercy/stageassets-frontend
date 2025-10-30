@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import type { User, LoginCredentials, RegisterData } from '../types/auth.types';
 import { authService } from '../services/auth.service';
 
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Check for existing token and fetch user on mount
   useEffect(() => {
@@ -49,27 +51,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
     localStorage.setItem('access_token', response.token);
-    setUser(response.user);
+    // Fetch complete user profile to ensure we have all fields including avatarUrl
+    const userData = await authService.getProfile();
+    setUser(userData);
+    // Clear all cached queries to ensure fresh data is fetched for the new user
+    queryClient.clear();
     navigate('/dashboard');
   };
 
   const register = async (data: RegisterData) => {
-    const response = await authService.register(data);
-    localStorage.setItem('access_token', response.token);
-    setUser(response.user);
-    navigate('/dashboard');
+    await authService.register(data);
+    // Don't store token or user yet - they need to verify email first
+    // The backend sends a verification email
+    navigate('/verification-pending');
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
     setUser(null);
+    // Clear all cached queries on logout
+    queryClient.clear();
     navigate('/login');
   };
 
   const loginWithGoogle = () => {
-    // Redirect to backend Google OAuth endpoint
+    // Redirect to backend Google OAuth endpoint with prompt=select_account
+    // This forces Google to show account selection screen
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    window.location.href = `${apiUrl}/auth/google`;
+    window.location.href = `${apiUrl}/auth/google?prompt=select_account`;
   };
 
   const value = {

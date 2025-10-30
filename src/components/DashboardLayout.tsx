@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getFileUrl } from '../lib/file-url';
+import { Avatar } from './Avatar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -105,30 +105,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* User Section at Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-          <div className="flex items-center gap-3 px-3 py-2">
-            {user?.avatarUrl ? (
-              <img
-                src={getFileUrl(user.avatarUrl)!}
-                alt="Profile"
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-100"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center ring-2 ring-gray-100">
-                <span className="text-sm font-semibold text-emerald-700">
-                  {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase()}
-                </span>
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t-2 border-gray-100 bg-gradient-to-br from-gray-50 to-white">
+          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/80 transition-all group">
+            <Link
+              to="/settings"
+              onClick={() => setIsSidebarOpen(false)}
+              className="flex items-center gap-3 flex-1 min-w-0"
+            >
+              <div className="relative">
+                <Avatar
+                  avatarUrl={user?.avatarUrl}
+                  firstName={user?.firstName}
+                  lastName={user?.lastName}
+                  size="md"
+                  className="ring-2 ring-emerald-100 group-hover:ring-emerald-200 transition-all"
+                />
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.firstName || user?.email?.split('@')[0]}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-emerald-600 transition-colors">
+                  {user?.firstName && user?.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.firstName || user?.email?.split('@')[0]}
+                </p>
+                <p className="text-xs text-gray-500 truncate group-hover:text-gray-600 transition-colors">
+                  {user?.email}
+                </p>
+              </div>
+            </Link>
             <button
               onClick={handleLogout}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
               title="Sign out"
             >
               <LogOut className="w-4 h-4" />

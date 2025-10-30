@@ -4,11 +4,14 @@ import { FileText, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { Avatar } from '../components/Avatar';
 import { Button, Card, CardContent } from '../components/ui';
 import { activityLogsService } from '../services/activity-logs.service';
+import { useAuth } from '../hooks/useAuth';
 import type { ActivityLogFilters } from '../types/activity-logs.types';
 
 export default function ActivityLogsPage() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState<ActivityLogFilters>({
     limit: 50,
   });
@@ -54,14 +57,22 @@ export default function ActivityLogsPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Activity Logs</h1>
             <p className="text-gray-600">View your account activity and actions</p>
           </div>
-          <Button
-            onClick={() => setShowFilters(!showFilters)}
-            variant="secondary"
-            className="flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+            <Avatar
+              avatarUrl={user?.avatarUrl}
+              firstName={user?.firstName}
+              lastName={user?.lastName}
+              size="md"
+            />
+          </div>
         </div>
 
         {/* Filters */}

@@ -68,6 +68,11 @@ export function ImageUpload({
             src={preview}
             alt="Preview"
             className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              console.error('Image failed to load:', preview);
+              // Don't remove on error, just show broken image or keep trying
+            }}
           />
           <button
             type="button"

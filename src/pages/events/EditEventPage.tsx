@@ -1,40 +1,61 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, Palette, Image as ImageIcon, Bell, FileText, Info } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Calendar, Clock, Palette, Image as ImageIcon, Bell, FileText } from 'lucide-react';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { Button } from '../../components/ui';
 import { ImageUpload } from '../../components/ImageUpload';
-import { PlanLimitError } from '../../components/PlanLimitError';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { eventsService } from '../../services/events.service';
 import { eventSchema, type EventFormData } from '../../schemas/event.schema';
+import { getFileUrl } from '../../lib/file-url';
 
-export default function CreateEventPage() {
+export default function EditEventPage() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [isPlanLimitError, setIsPlanLimitError] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+
+  // Fetch event data
+  const { data: event, isLoading } = useQuery({
+    queryKey: ['event', id],
+    queryFn: () => eventsService.getEvent(Number(id)),
+    enabled: !!id,
+  });
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
     watch,
     setValue,
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: {
-      brandColor: '#3B82F6',
-      enableAutoReminders: true,
-      reminderDaysBefore: 3,
-    },
   });
 
   const brandColor = watch('brandColor');
 
-  const createMutation = useMutation({
+  // Reset form when event data loads
+  useEffect(() => {
+    if (event) {
+      reset({
+        name: event.name,
+        description: event.description || '',
+        deadline: new Date(event.deadline).toISOString().slice(0, 16),
+        eventDate: event.eventDate ? new Date(event.eventDate).toISOString().slice(0, 16) : '',
+        brandColor: event.brandColor || '#3B82F6',
+        enableAutoReminders: event.enableAutoReminders,
+        reminderDaysBefore: event.reminderDaysBefore || 3,
+        customInstructions: event.customInstructions || '',
+      });
+    }
+  }, [event, reset]);
+
+  const updateMutation = useMutation({
     mutationFn: ({ data, logo }: { data: EventFormData; logo: File | null }) => {
       // Transform datetime-local strings to ISO 8601 format
       const transformedData = {
@@ -44,74 +65,71 @@ export default function CreateEventPage() {
       };
 
       if (logo) {
-        return eventsService.createEventWithLogo(transformedData, logo);
+        return eventsService.updateEventWithLogo(Number(id), transformedData, logo);
       }
-      return eventsService.createEvent(transformedData);
+      return eventsService.updateEvent(Number(id), transformedData);
     },
-    onSuccess: (data) => {
-      navigate(`/events/${data.id}`);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event', id] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      navigate(`/events/${id}`);
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.message || 'Failed to create event';
+      const errorMessage = err.response?.data?.message || 'Failed to update event';
       setError(errorMessage);
-      // Check if it's a plan limit error (403 status)
-      setIsPlanLimitError(err.response?.status === 403);
     },
   });
 
   const onSubmit = (data: EventFormData) => {
     setError(null);
-    setIsPlanLimitError(false);
-    createMutation.mutate({ data, logo: logoFile });
+    updateMutation.mutate({ data, logo: logoFile });
   };
 
-  const handleUpgrade = () => {
-    // TODO: Navigate to pricing/subscription page when implemented
-    navigate('/dashboard');
-  };
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!event) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-600">Event not found</p>
+          <Button onClick={() => navigate('/dashboard')} className="mt-4">
+            Back to Dashboard
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(`/events/${id}`)}
           className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-emerald-600 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to dashboard
+          Back to event details
         </button>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">Create New Event</h1>
-            <p className="text-lg text-gray-600">Set up your event details to start collecting assets from speakers</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Info Banner */}
-      <div className="mb-6">
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-l-4 border-emerald-500 rounded-lg p-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-emerald-900">After creating your event, you'll be able to:</p>
-            <ul className="text-sm text-emerald-800 mt-2 space-y-1 ml-4 list-disc">
-              <li>Define asset requirements (headshots, bios, presentations, etc.)</li>
-              <li>Invite speakers and track their submissions</li>
-              <li>Set up automated reminders</li>
-            </ul>
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">Edit Event</h1>
+            <p className="text-lg text-gray-600">Update your event details and settings</p>
           </div>
         </div>
       </div>
 
       {/* Form */}
       <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm">
-        {error && isPlanLimitError && (
-          <div className="p-6 pb-0">
-            <PlanLimitError message={error} onUpgrade={handleUpgrade} />
-          </div>
-        )}
-        {error && !isPlanLimitError && (
+        {error && (
           <div className="p-6 pb-0">
             <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
               <p className="text-sm font-medium text-red-800">{error}</p>
@@ -277,8 +295,20 @@ export default function CreateEventPage() {
                     Event Logo
                   </label>
                   <p className="text-xs text-gray-500 mb-2">Optional: Upload your event or company logo</p>
+                  {event.logoUrl && !logoFile && (
+                    <div className="mb-3">
+                      <div className="relative w-24 h-24 border-2 border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                        <img
+                          src={getFileUrl(event.logoUrl)!}
+                          alt="Current logo"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1.5">Current logo</p>
+                    </div>
+                  )}
                   <ImageUpload
-                    label="Upload Logo"
+                    label={event.logoUrl ? "Update Logo" : "Upload Logo"}
                     onFileSelect={setLogoFile}
                     maxSizeMB={10}
                   />
@@ -375,22 +405,22 @@ export default function CreateEventPage() {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t-2 border-gray-100">
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={updateMutation.isPending}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all text-base py-3 px-8 font-semibold"
               >
-                {createMutation.isPending ? (
+                {updateMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating Event...
+                    Saving Changes...
                   </span>
                 ) : (
-                  'Create Event'
+                  'Save Changes'
                 )}
               </Button>
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(`/events/${id}`)}
                 className="flex-1 sm:flex-none border-2 border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 py-3 px-8 font-medium"
               >
                 Cancel
@@ -398,34 +428,6 @@ export default function CreateEventPage() {
             </div>
           </form>
         </div>
-
-      {/* Next Steps Card */}
-      <div className="mt-6 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-3">What happens next?</h3>
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm">1</div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Define Asset Requirements</p>
-              <p className="text-xs text-gray-600 mt-0.5">Specify what assets speakers need to submit (headshots, bios, presentations, etc.)</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm">2</div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Invite Speakers</p>
-              <p className="text-xs text-gray-600 mt-0.5">Send invitations to speakers via email, they'll get a personalized portal link</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm">3</div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Track Submissions</p>
-              <p className="text-xs text-gray-600 mt-0.5">Monitor speaker progress, download assets, and send reminders as needed</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </DashboardLayout>
   );
 }

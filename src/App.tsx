@@ -7,6 +7,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import VerificationPendingPage from './pages/auth/VerificationPendingPage';
 import GoogleCallbackPage from './pages/auth/GoogleCallbackPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -14,6 +15,8 @@ import ActivityLogsPage from './pages/ActivityLogsPage';
 import PricingPage from './pages/PricingPage';
 import SettingsPage from './pages/SettingsPage';
 import CreateEventPage from './pages/events/CreateEventPage';
+import CreateEventWizardPage from './pages/events/CreateEventWizardPage';
+import EditEventPage from './pages/events/EditEventPage';
 import EventDetailsPage from './pages/events/EventDetailsPage';
 import SpeakerPortalPage from './pages/portal/SpeakerPortalPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -30,6 +33,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/verification-pending" element={<VerificationPendingPage />} />
           <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/portal/speakers/:accessToken" element={<SpeakerPortalPage />} />
@@ -71,7 +75,15 @@ function App() {
             path="/events/new"
             element={
               <ProtectedRoute>
-                <CreateEventPage />
+                <CreateEventWizardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditEventPage />
               </ProtectedRoute>
             }
           />

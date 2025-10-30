@@ -3,6 +3,9 @@ export interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  avatarUrl?: string | null;
+  googleId?: string | null;
+  authProvider?: 'local' | 'google';
   isActive?: boolean;
   isEmailVerified?: boolean;
   createdAt?: string;

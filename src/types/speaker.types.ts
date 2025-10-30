@@ -37,21 +37,35 @@ export interface UpdateSpeakerData {
 
 export interface Submission {
   id: number;
-  speakerId: number;
-  assetRequirementId: number;
+  speakerId?: number;
+  assetRequirementId?: number;
   fileName: string;
   fileUrl: string;
   fileSize: number;
   mimeType: string;
-  storageProvider: 'local' | 'gcs';
-  storagePath: string;
-  imageWidth: number | null;
-  imageHeight: number | null;
+  storageProvider?: 'local' | 'gcs';
+  storagePath?: string;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
   version: number;
-  replacesSubmissionId: number | null;
-  isLatest: boolean;
-  uploadedAt: string;
+  replacesSubmissionId?: number | null;
+  isLatest?: boolean;
+  uploadedAt?: string;
   createdAt: string;
+  // Nested speaker and requirement data from event submissions endpoint
+  speaker?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    submissionStatus: SubmissionStatus;
+  };
+  assetRequirement?: {
+    id: number;
+    label: string;
+    assetType: string;
+    isRequired: boolean;
+  };
 }
 
 export interface CreateSubmissionData {

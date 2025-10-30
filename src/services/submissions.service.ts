@@ -74,4 +74,14 @@ export const submissionsService = {
     );
     return response.data;
   },
+
+  /**
+   * Get all submissions for an event
+   */
+  async getEventSubmissions(eventId: number): Promise<Submission[]> {
+    const response = await apiClient.get<{ total: number; submissions: Submission[] }>(
+      `/events/${eventId}/submissions`
+    );
+    return response.data.submissions;
+  },
 };

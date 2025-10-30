@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Calendar, Search, Grid3x3, List, Filter, Archive, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { EventCard } from '../../components/EventCard';
@@ -8,7 +8,9 @@ import { EmptyState } from '../../components/EmptyState';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EventCardSkeleton, StatsCardSkeleton } from '../../components/Skeleton';
 import { Button, Card, CardContent } from '../../components/ui';
+import { Avatar } from '../../components/Avatar';
 import { eventsService } from '../../services/events.service';
+import { useAuth } from '../../hooks/useAuth';
 import type { Event, EventStats } from '../../types/event.types';
 
 type FilterType = 'all' | 'active' | 'archived';
@@ -16,14 +18,17 @@ type ViewMode = 'grid' | 'list';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterType>('active');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch all events (active and archived)
   const { data: allEvents, isLoading: eventsLoading } = useQuery({
-    queryKey: ['events', true], // Always include archived for client-side filtering
+    queryKey: ['events', user?.id, true], // Include user ID to invalidate on user change
     queryFn: () => eventsService.getEvents(true),
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   // Fetch stats for each event
@@ -39,6 +44,21 @@ export default function DashboardPage() {
     },
     enabled: !!allEvents && allEvents.length > 0,
   });
+
+  // Archive/unarchive event mutation
+  const archiveMutation = useMutation({
+    mutationFn: ({ eventId, isArchived }: { eventId: number; isArchived: boolean }) =>
+      eventsService.updateEvent(eventId, { isArchived }),
+    onSuccess: () => {
+      // Invalidate queries to refresh the events list
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+
+  // Handle archive toggle
+  const handleArchiveToggle = (eventId: number, isArchived: boolean) => {
+    archiveMutation.mutate({ eventId, isArchived });
+  };
 
   // Filter and search events
   const filteredEvents = useMemo(() => {
@@ -159,53 +179,61 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900">Events</h1>
             <p className="text-sm text-gray-600 mt-1">Manage your event asset collections</p>
           </div>
-          <Button
-            onClick={() => navigate('/events/new')}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Event
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => navigate('/events/new')}
+              className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg shadow-emerald-500/30"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </Button>
+            <Avatar
+              avatarUrl={user?.avatarUrl}
+              firstName={user?.firstName}
+              lastName={user?.lastName}
+              size="md"
+            />
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card>
+          <Card className="border-2 border-gray-100 hover:border-yellow-200 transition-all">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Events</p>
+                  <p className="text-sm font-semibold text-gray-600">Total Events</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
                 </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                <div className="w-12 h-12 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl flex items-center justify-center shadow-sm">
+                  <Calendar className="w-6 h-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-gray-100 hover:border-emerald-200 transition-all">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active</p>
+                  <p className="text-sm font-semibold text-gray-600">Active</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{stats.active}</p>
                 </div>
-                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl flex items-center justify-center shadow-sm">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-gray-100 hover:border-gray-200 transition-all">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Archived</p>
+                  <p className="text-sm font-semibold text-gray-600">Archived</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{stats.archived}</p>
                 </div>
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center shadow-sm">
                   <Archive className="w-5 h-5 text-gray-600" />
                 </div>
               </div>
@@ -306,6 +334,7 @@ export default function DashboardPage() {
               event={event}
               stats={statsMap?.[event.id]}
               viewMode={viewMode}
+              onArchiveToggle={handleArchiveToggle}
             />
           ))}
         </div>

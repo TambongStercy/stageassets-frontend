@@ -129,4 +129,23 @@ export const eventsService = {
   async deleteEvent(id: number): Promise<void> {
     await apiClient.delete(`/events/${id}`);
   },
+
+  /**
+   * Download all event assets as a ZIP file
+   */
+  async downloadEventAssets(id: number, eventName: string): Promise<void> {
+    const response = await apiClient.get(`/events/${id}/download-assets`, {
+      responseType: 'blob',
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${eventName.replace(/[^a-zA-Z0-9\s]/g, '_')}_assets.zip`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };

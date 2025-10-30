@@ -18,11 +18,36 @@ export interface Event {
 }
 
 export interface EventStats {
-  totalSpeakers: number;
-  completedSpeakers: number;
-  partialSpeakers: number;
-  pendingSpeakers: number;
-  completionRate: number;
+  speakers: {
+    total: number;
+    completed: number;
+    partial: number;
+    pending: number;
+    completionRate: number;
+  };
+  assetTypes: {
+    total: number;
+    required: number;
+    optional: number;
+  };
+  assets: {
+    expected: number;
+    received: number;
+    missing: number;
+    progress: number;
+  };
+  requiredAssets: {
+    expected: number;
+    received: number;
+    missing: number;
+    progress: number;
+  };
+  optionalAssets: {
+    expected: number;
+    received: number;
+    missing: number;
+    progress: number;
+  };
 }
 
 export interface CreateEventData {
