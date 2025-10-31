@@ -50,7 +50,7 @@ const LandingPage = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={loginWithGoogle}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -107,56 +107,114 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Visual - Clean Dashboard Preview */}
+            {/* Visual - Realistic Dashboard Preview */}
             <div className="relative">
-              <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                  <span className="text-sm font-medium text-gray-900">Tech Summit 2025</span>
-                  <span className="text-xs text-gray-500">stageasset.io/summit-2025</span>
-                </div>
-
-                <div className="space-y-3">
-                  {/* Submitted speaker */}
-                  <div className="bg-white rounded-md p-3 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-3 bg-gray-200 rounded w-2/3 mb-1"></div>
-                        <div className="h-2 bg-gray-100 rounded w-1/3"></div>
-                      </div>
-                      <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded">Submitted</span>
-                    </div>
+              {/* Browser Chrome */}
+              <div className="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+                {/* Browser Header */}
+                <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
                   </div>
-
-                  {/* Pending speaker */}
-                  <div className="bg-white rounded-md p-3 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
-                        <div className="h-2 bg-gray-100 rounded w-1/4"></div>
-                      </div>
-                      <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-medium rounded">Pending</span>
-                    </div>
-                  </div>
-
-                  {/* Another submitted */}
-                  <div className="bg-white rounded-md p-3 border border-gray-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-3 bg-gray-200 rounded w-3/4 mb-1"></div>
-                        <div className="h-2 bg-gray-100 rounded w-2/5"></div>
-                      </div>
-                      <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded">Submitted</span>
-                    </div>
+                  <div className="flex-1 bg-white rounded px-3 py-1 text-xs text-gray-500 ml-2">
+                    stageasset.io/tech-summit-2025
                   </div>
                 </div>
 
-                <button className="w-full mt-4 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium rounded transition-colors">
-                  Download all files
-                </button>
+                {/* Dashboard Content */}
+                <div className="bg-gray-50 p-6">
+                  {/* Event Header */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg"></div>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-gray-900">Tech Summit 2025</h3>
+                        <p className="text-xs text-gray-500">Deadline: Dec 15, 2024</p>
+                      </div>
+                      <button className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg">
+                        <Download className="w-3 h-3 inline mr-1" />
+                        Download All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="bg-white border border-gray-200 rounded-lg p-3">
+                      <div className="text-2xl font-bold text-gray-900">24</div>
+                      <div className="text-xs text-gray-500">Speakers</div>
+                    </div>
+                    <div className="bg-white border border-emerald-200 rounded-lg p-3">
+                      <div className="text-2xl font-bold text-emerald-700">18</div>
+                      <div className="text-xs text-emerald-600">Submitted</div>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-lg p-3">
+                      <div className="text-2xl font-bold text-gray-900">72</div>
+                      <div className="text-xs text-gray-500">Files</div>
+                    </div>
+                  </div>
+
+                  {/* Speaker List */}
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                      <h4 className="text-xs font-semibold text-gray-700">SPEAKERS</h4>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {/* Speaker 1 - Submitted */}
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full"></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">Sarah Chen</div>
+                          <div className="text-xs text-gray-500">sarah@techcorp.com</div>
+                        </div>
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded">
+                          ✓ Complete
+                        </span>
+                      </div>
+                      {/* Speaker 2 - Submitted */}
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full"></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">Michael Rodriguez</div>
+                          <div className="text-xs text-gray-500">m.rodriguez@startup.io</div>
+                        </div>
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded">
+                          ✓ Complete
+                        </span>
+                      </div>
+                      {/* Speaker 3 - Pending */}
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full"></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">Jennifer Park</div>
+                          <div className="text-xs text-gray-500">jennifer@designco.com</div>
+                        </div>
+                        <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-xs font-medium rounded">
+                          ⏱ Pending
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Floating notification */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.5 }}
+                className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-3 max-w-xs"
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Sarah Chen just submitted</p>
+                    <p className="text-xs text-gray-500">Headshot, Bio, Slides</p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </Container>
@@ -175,68 +233,328 @@ const LandingPage = () => {
         </Container>
       </section>
 
-      {/* The Problem */}
-      <section className="py-16 md:py-20">
+      {/* The Problem - Two Column Layout */}
+      <section className="py-12 md:py-16 bg-gray-50">
         <Container>
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              You know this pain
-            </h2>
-            <div className="prose prose-lg">
-              <p className="text-gray-700 mb-4">
-                Three weeks before your conference. You need files from 50 speakers. Headshots. Bios. Presentation decks.
-              </p>
-              <p className="text-gray-700 mb-4">
-                So you email them. Half respond with the wrong file format. A quarter miss the deadline. Someone sends a 2006 headshot. Another person emails you six versions of their deck at midnight.
-              </p>
-              <p className="text-gray-900 font-medium">
-                You are not an event manager. You are a professional file wrangler.
-              </p>
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
+            {/* Left: Problem Copy */}
+            <div>
+              <div className="inline-block px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-full mb-3 uppercase tracking-wide">
+                The Problem
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Your inbox is not a file management system
+              </h2>
+              <div className="space-y-3 text-base text-gray-700 leading-relaxed">
+                <p>
+                  Three weeks before your conference. You need files from 50 speakers: headshots, bios, presentation decks.
+                </p>
+                <p className="font-medium text-gray-900">
+                  So you email them. Then the chaos begins:
+                </p>
+                <ul className="space-y-2 ml-4">
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>Half respond with the wrong file format</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>A quarter ghost you until the day before</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>Someone sends a pixelated 2006 headshot</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>Another emails six versions: "FINAL_FINAL_v3.pptx"</span>
+                  </li>
+                </ul>
+                <p className="pt-3 text-gray-900 font-semibold border-t border-gray-200">
+                  Your inbox becomes an archaeological dig through 200+ messages.
+                </p>
+                <p className="text-gray-600">
+                  You're not an event manager. <span className="text-gray-900 font-medium">You're a file wrangler.</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Before/After Visual */}
+            <div className="space-y-4">
+              {/* BEFORE - Email Chaos */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-semibold rounded uppercase">Before</span>
+                  <span className="text-xs text-gray-500">Email chaos</span>
+                </div>
+                <div className="bg-white rounded-lg shadow-md border border-gray-300 overflow-hidden">
+                  {/* Email Client Mockup */}
+                  <div className="bg-gray-100 px-3 py-2 border-b border-gray-200 flex items-center gap-2">
+                    <Mail className="w-3 h-3 text-gray-500" />
+                    <span className="text-xs text-gray-600 font-medium">Inbox (247)</span>
+                  </div>
+                  <div className="divide-y divide-gray-100 bg-white">
+                    {[
+                      { subject: 'Re: Re: Re: Headshot - UPDATED', time: '11:47 PM', status: 'unread' },
+                      { subject: 'FINAL_bio_v3_USE_THIS.docx', time: 'Yesterday', status: 'unread' },
+                      { subject: 'Quick question about file format', time: '2 days ago', status: 'unread' },
+                    ].map((email, i) => (
+                      <div key={i} className={`px-3 py-2 ${email.status === 'unread' ? 'bg-gray-50' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs flex-1 truncate ${email.status === 'unread' ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                            {email.subject}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-2">{email.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-100 px-3 py-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      18 speakers haven't responded. 12 wrong formats.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AFTER - StageAsset Dashboard */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded uppercase">After</span>
+                  <span className="text-xs text-gray-500">One dashboard</span>
+                </div>
+                <div className="bg-white rounded-lg shadow-md border border-gray-300 overflow-hidden">
+                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-900">Tech Summit 2025</h4>
+                      </div>
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-semibold rounded">
+                        42/50
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-2 bg-white">
+                    <div className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="text-xs text-gray-900">Sarah Chen</span>
+                      </div>
+                      <span className="text-xs text-emerald-600 font-medium">Complete</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="text-xs text-gray-900">Michael Rodriguez</span>
+                      </div>
+                      <span className="text-xs text-emerald-600 font-medium">Complete</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs text-gray-600">Jennifer Park</span>
+                      </div>
+                      <span className="text-xs text-gray-500">Pending</span>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 px-3 py-2 border-t border-gray-200">
+                    <button className="w-full py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded hover:bg-emerald-700 transition-colors cursor-pointer">
+                      <Download className="w-3 h-3 inline mr-1" />
+                      Download All (126 files)
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Container>
       </section>
 
       {/* How it Works */}
-      <section className="py-16 md:py-20 bg-gradient-to-br from-gray-50 via-emerald-50/20 to-gray-50" id="how-it-works">
+      <section className="py-16 md:py-20 bg-white" id="how-it-works">
         <Container>
-          <div className="max-w-2xl mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Three steps, zero pain
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              Three steps. Zero chaos.
             </h2>
             <p className="text-lg text-gray-600">
-              We built this because we were tired of the same mess.
+              We built this because we were tired of the same mess every event.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                number: '1',
-                title: 'Create event',
-                description: 'Name it. Set a deadline. Pick what assets you need.',
-                detail: 'Takes 30 seconds. No complicated setup.'
-              },
-              {
-                number: '2',
-                title: 'Share link',
-                description: 'Copy the link. Paste it in your speaker email.',
-                detail: 'They upload directly. No login needed.'
-              },
-              {
-                number: '3',
-                title: 'Download ZIP',
-                description: 'All files organized by speaker. One click.',
-                detail: 'We remind the stragglers automatically.'
-              }
-            ].map((step) => (
-              <div key={step.number}>
-                <div className="text-4xl font-bold text-emerald-700 mb-3">{step.number}</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-700 mb-2">{step.description}</p>
-                <p className="text-sm text-gray-500">{step.detail}</p>
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div>
+              <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-semibold rounded-full mb-4">
+                Step 1
               </div>
-            ))}
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Create your event in 30 seconds</h3>
+              <p className="text-lg text-gray-700 mb-4">
+                Name it. Set a deadline. Pick what you need—headshots, bios, slides, whatever.
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Choose from preset requirements or create custom ones</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Set file format rules and size limits automatically</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Add your logo to make it look professional</span>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-gray-50 rounded-xl p-8 border border-gray-200">
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Create Event</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-gray-600 block mb-1">Event Name</label>
+                    <div className="bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
+                      Tech Summit 2025
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 block mb-1">Deadline</label>
+                    <div className="bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
+                      December 15, 2024
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 block mb-2">Required Assets</label>
+                    <div className="space-y-2">
+                      {['Headshot', 'Bio', 'Presentation Slides'].map((asset) => (
+                        <div key={asset} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm text-gray-900">{asset}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="order-2 lg:order-1">
+              {/* Speaker Portal Preview */}
+              <div className="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-6 text-white">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-lg"></div>
+                    <div>
+                      <h4 className="font-bold">Tech Summit 2025</h4>
+                      <p className="text-sm text-emerald-100">Asset Submission Portal</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-emerald-50">
+                    Hi Sarah! Please upload your speaker materials below.
+                  </p>
+                </div>
+                <div className="p-6 bg-gray-50">
+                  <div className="space-y-4">
+                    <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-900 mb-1">Headshot</p>
+                      <p className="text-xs text-gray-500 mb-3">JPG or PNG, min 800x800px</p>
+                      <button className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg cursor-pointer hover:bg-emerald-700 transition-colors">
+                        Choose File
+                      </button>
+                    </div>
+                    <div className="bg-white border-2 border-emerald-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">Bio (uploaded)</p>
+                          <p className="text-xs text-gray-500">sarah-bio.pdf • 245 KB</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2">
+              <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-semibold rounded-full mb-4">
+                Step 2
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Share one link. That's it.</h3>
+              <p className="text-lg text-gray-700 mb-4">
+                Copy the link, paste it in your speaker invitation email. They click, upload, done.
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>No account creation required for speakers</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Mobile-friendly upload from any device</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Files validated automatically against your requirements</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-semibold rounded-full mb-4">
+                Step 3
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Download everything in one click</h3>
+              <p className="text-lg text-gray-700 mb-4">
+                All files, organized by speaker name, in a single ZIP file. No more hunting through email attachments.
+              </p>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Automatic reminders sent to speakers who haven't submitted</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Real-time dashboard shows exactly who's pending</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span>Version tracking if speakers update their files</span>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-gradient-to-br from-gray-50 to-emerald-50 rounded-xl p-8 border border-gray-200">
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Assets Ready</h4>
+                    <p className="text-xs text-gray-500">18 of 24 speakers submitted</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-emerald-600">75%</div>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Progress</span>
+                    <span>18/24</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                  </div>
+                </div>
+                <button className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                  <Download className="w-4 h-4" />
+                  Download All Files (72 files, 145 MB)
+                </button>
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  Files organized: /Sarah_Chen/, /Michael_Rodriguez/, ...
+                </p>
+              </div>
+            </div>
           </div>
         </Container>
       </section>
