@@ -194,28 +194,28 @@ export function AssetRequirementsManager({ eventId }: AssetRequirementsManagerPr
                 <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
                   <FileText className="w-5 h-5 text-emerald-700" />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-gray-900">{req.label}</h4>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h4 className="font-medium text-gray-900 truncate">{req.label}</h4>
                     {req.isRequired && (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded flex-shrink-0">
                         Required
                       </span>
                     )}
-                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded flex-shrink-0">
                       {req.assetType}
                     </span>
                   </div>
                   {req.description && (
-                    <p className="text-sm text-gray-600 mb-2">{req.description}</p>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{req.description}</p>
                   )}
                   <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                     {req.acceptedFileTypes && (
-                      <span>Files: {req.acceptedFileTypes.join(', ')}</span>
+                      <span className="truncate max-w-xs">Files: {req.acceptedFileTypes.join(', ')}</span>
                     )}
-                    {req.maxFileSizeMb && <span>Max: {req.maxFileSizeMb}MB</span>}
+                    {req.maxFileSizeMb && <span className="flex-shrink-0">Max: {req.maxFileSizeMb}MB</span>}
                     {req.minImageWidth && req.minImageHeight && (
-                      <span>
+                      <span className="flex-shrink-0">
                         Min Size: {req.minImageWidth}x{req.minImageHeight}px
                       </span>
                     )}

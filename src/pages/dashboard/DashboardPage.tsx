@@ -187,12 +187,18 @@ export default function DashboardPage() {
               <Plus className="w-4 h-4 mr-2" />
               Create Event
             </Button>
-            <Avatar
-              avatarUrl={user?.avatarUrl}
-              firstName={user?.firstName}
-              lastName={user?.lastName}
-              size="md"
-            />
+            <button
+              onClick={() => navigate('/settings')}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              title="Go to Settings"
+            >
+              <Avatar
+                avatarUrl={user?.avatarUrl}
+                firstName={user?.firstName}
+                lastName={user?.lastName}
+                size="md"
+              />
+            </button>
           </div>
         </div>
 

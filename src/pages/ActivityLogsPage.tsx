@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout } from '../components/DashboardLayout';
@@ -12,6 +13,7 @@ import type { ActivityLogFilters } from '../types/activity-logs.types';
 
 export default function ActivityLogsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<ActivityLogFilters>({
     limit: 50,
   });
@@ -66,12 +68,18 @@ export default function ActivityLogsPage() {
               <Filter className="w-4 h-4" />
               {showFilters ? 'Hide Filters' : 'Show Filters'}
             </Button>
-            <Avatar
-              avatarUrl={user?.avatarUrl}
-              firstName={user?.firstName}
-              lastName={user?.lastName}
-              size="md"
-            />
+            <button
+              onClick={() => navigate('/settings')}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              title="Go to Settings"
+            >
+              <Avatar
+                avatarUrl={user?.avatarUrl}
+                firstName={user?.firstName}
+                lastName={user?.lastName}
+                size="md"
+              />
+            </button>
           </div>
         </div>
 

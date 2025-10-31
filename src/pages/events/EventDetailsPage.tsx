@@ -30,6 +30,8 @@ import { SubscriptionGateModal } from '../../components/SubscriptionGateModal';
 import { SetupProgressChecklist } from '../../components/SetupProgressChecklist';
 import { StatsCardSkeleton, TableRowSkeleton } from '../../components/Skeleton';
 import { Button, Card, CardContent, Badge } from '../../components/ui';
+import { EventDetailsSidebar } from '../../components/EventDetailsSidebar';
+import { ErrorModal } from '../../components/ErrorModal';
 import { useSubscriptionGate } from '../../hooks/useSubscriptionGate';
 import { eventsService } from '../../services/events.service';
 import { speakersService } from '../../services/speakers.service';
@@ -47,6 +49,11 @@ export default function EventDetailsPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [errorModalInfo, setErrorModalInfo] = useState<{ isOpen: boolean; title: string; message: string }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   // Ref for scrolling to tabs section
   const tabsSectionRef = useRef<HTMLDivElement>(null);
@@ -108,7 +115,11 @@ export default function EventDetailsPage() {
       await eventsService.downloadEventAssets(eventId, event.name);
     } catch (error) {
       console.error('Failed to download assets:', error);
-      alert('Failed to download assets. Please try again.');
+      setErrorModalInfo({
+        isOpen: true,
+        title: 'Download Failed',
+        message: 'Failed to download assets. Please try again.',
+      });
     }
   };
 
@@ -160,7 +171,7 @@ export default function EventDetailsPage() {
       <div className="mb-6">
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Events
@@ -184,7 +195,7 @@ export default function EventDetailsPage() {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{event.name}</h1>
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate" title={event.name}>{event.name}</h1>
                   {event.isArchived && (
                     <Badge variant="secondary" className="text-xs flex-shrink-0">
                       Archived
@@ -381,24 +392,25 @@ export default function EventDetailsPage() {
         </Card>
       </div>
 
-      {/* Tabs */}
-      <div ref={tabsSectionRef} className="bg-white border border-gray-200 rounded-xl mb-6">
-        <div className="flex items-center gap-1 p-2 border-b border-gray-200 overflow-x-auto">
+      {/* Mobile Tabs (visible only on mobile/tablet) */}
+      <div ref={tabsSectionRef} className="lg:hidden bg-white border border-gray-200 rounded-xl mb-6">
+        <div className="grid grid-cols-4 gap-1 p-2">
           <button
             onClick={() => setActiveTab('speakers')}
-            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+            className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-medium transition-all relative cursor-pointer ${
               activeTab === 'speakers'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
+            aria-label="Speakers"
           >
-            <Users className="w-4 h-4 flex-shrink-0" />
-            <span>Speakers</span>
+            <Users className="w-5 h-5" />
+            <span className="truncate w-full text-center">Speakers</span>
             {stats && stats.speakers.total > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-xs flex-shrink-0 ${
+              <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-xs font-bold ${
                 activeTab === 'speakers'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-gray-100 text-gray-600'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gray-500 text-white'
               }`}>
                 {stats.speakers.total}
               </span>
@@ -406,40 +418,55 @@ export default function EventDetailsPage() {
           </button>
           <button
             onClick={() => setActiveTab('assets')}
-            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+            className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               activeTab === 'assets'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
+            aria-label="Assets"
           >
-            <FileText className="w-4 h-4 flex-shrink-0" />
-            <span>Assets</span>
+            <FileText className="w-5 h-5" />
+            <span className="truncate w-full text-center">Assets</span>
           </button>
           <button
             onClick={() => setActiveTab('reminders')}
-            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+            className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               activeTab === 'reminders'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
+            aria-label="Reminders"
           >
-            <Bell className="w-4 h-4 flex-shrink-0" />
-            <span>Reminders</span>
+            <Bell className="w-5 h-5" />
+            <span className="truncate w-full text-center">Reminders</span>
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+            className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               activeTab === 'settings'
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
+            aria-label="Settings"
           >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            <span>Settings</span>
+            <Settings className="w-5 h-5" />
+            <span className="truncate w-full text-center">Settings</span>
           </button>
         </div>
+      </div>
 
-        <div className="p-6">
+      {/* Sidebar Layout */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-6">
+        {/* Sidebar */}
+        <EventDetailsSidebar
+          activeSection={activeTab}
+          onSectionChange={setActiveTab}
+          speakerCount={stats?.speakers.total}
+          className="hidden lg:block w-64 flex-shrink-0 rounded-xl sticky top-6 h-fit"
+        />
+
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-xl p-4 md:p-6">
           {/* Tab Content */}
           {activeTab === 'speakers' && (
             <div>
@@ -500,7 +527,7 @@ export default function EventDetailsPage() {
               <div className="flex gap-2 mb-6 border-b border-gray-200">
                 <button
                   onClick={() => setAssetsSubTab('submissions')}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                     assetsSubTab === 'submissions'
                       ? 'border-emerald-600 text-emerald-700'
                       : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -510,7 +537,7 @@ export default function EventDetailsPage() {
                 </button>
                 <button
                   onClick={() => setAssetsSubTab('requirements')}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                     assetsSubTab === 'requirements'
                       ? 'border-emerald-600 text-emerald-700'
                       : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -572,7 +599,9 @@ export default function EventDetailsPage() {
             </div>
           )}
         </div>
+        {/* End Main Content Area */}
       </div>
+      {/* End Sidebar Layout */}
 
       {/* Invite Modal */}
       <InviteSpeakerModal
@@ -616,6 +645,15 @@ export default function EventDetailsPage() {
         onClose={closeGate}
         feature={gateFeature}
         message={gateMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModalInfo.isOpen}
+        onClose={() => setErrorModalInfo({ isOpen: false, title: '', message: '' })}
+        title={errorModalInfo.title}
+        message={errorModalInfo.message}
+        type="error"
       />
     </DashboardLayout>
   );

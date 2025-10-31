@@ -109,18 +109,20 @@ export function SpeakerTable({ speakers, eventId }: SpeakerTableProps) {
           {speakers.map((speaker) => (
             <tr key={speaker.id} className="text-sm">
               <td className="py-4">
-                <div>
-                  <div className="font-medium text-gray-900">
+                <div className="max-w-xs">
+                  <div className="font-medium text-gray-900 truncate">
                     {speaker.firstName || speaker.lastName
                       ? `${speaker.firstName || ''} ${speaker.lastName || ''}`.trim()
                       : speaker.email}
                   </div>
-                  <div className="text-gray-500">{speaker.email}</div>
+                  <div className="text-gray-500 truncate">{speaker.email}</div>
                 </div>
               </td>
               <td className="py-4 text-gray-700">
-                {speaker.company || '—'}
-                {speaker.jobTitle && <div className="text-gray-500 text-xs">{speaker.jobTitle}</div>}
+                <div className="max-w-xs">
+                  <div className="truncate">{speaker.company || '—'}</div>
+                  {speaker.jobTitle && <div className="text-gray-500 text-xs truncate">{speaker.jobTitle}</div>}
+                </div>
               </td>
               <td className="py-4">{getStatusBadge(speaker.submissionStatus)}</td>
               <td className="py-4">

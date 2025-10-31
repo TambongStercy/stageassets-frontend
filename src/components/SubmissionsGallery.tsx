@@ -554,10 +554,10 @@ export function SubmissionsGallery({ eventId }: SubmissionsGalleryProps) {
                     <FileText className="w-6 h-6 text-white" />
                   )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white">{selectedSubmission.assetRequirement?.label || 'Asset'}</h3>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold text-white truncate">{selectedSubmission.assetRequirement?.label || 'Asset'}</h3>
                   {selectedSubmission.speaker && (
-                    <p className="text-sm text-emerald-100">
+                    <p className="text-sm text-emerald-100 truncate">
                       {selectedSubmission.speaker.firstName} {selectedSubmission.speaker.lastName}
                     </p>
                   )}
@@ -650,7 +650,7 @@ export function SubmissionsGallery({ eventId }: SubmissionsGalleryProps) {
                       <Presentation className="w-12 h-12 text-orange-600" />
                     </div>
                     <p className="text-orange-900 font-semibold text-lg mb-2">PowerPoint Presentation</p>
-                    <p className="text-orange-700 text-sm text-center mb-1">
+                    <p className="text-orange-700 text-sm text-center mb-1 truncate max-w-md mx-auto" title={selectedSubmission.fileName}>
                       {selectedSubmission.fileName}
                     </p>
                     <p className="text-orange-600 text-xs mb-4">
@@ -688,7 +688,7 @@ export function SubmissionsGallery({ eventId }: SubmissionsGalleryProps) {
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
                     {getFileIcon(selectedSubmission.mimeType)}
                   </div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">
+                  <p className="text-gray-600 text-sm font-medium mb-1 truncate max-w-md mx-auto" title={selectedSubmission.fileName}>
                     {selectedSubmission.fileName}
                   </p>
                   <p className="text-gray-500 text-xs">
@@ -700,8 +700,8 @@ export function SubmissionsGallery({ eventId }: SubmissionsGalleryProps) {
               {/* Asset Details */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                  <span className="text-sm font-medium text-gray-600">File Name:</span>
-                  <span className="text-sm text-gray-900">{selectedSubmission.fileName}</span>
+                  <span className="text-sm font-medium text-gray-600 flex-shrink-0">File Name:</span>
+                  <span className="text-sm text-gray-900 truncate ml-4" title={selectedSubmission.fileName}>{selectedSubmission.fileName}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-gray-200">
                   <span className="text-sm font-medium text-gray-600">File Size:</span>
@@ -795,8 +795,8 @@ export function SubmissionsGallery({ eventId }: SubmissionsGalleryProps) {
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <div className="text-xs text-gray-600">
-                                <p className="font-medium text-gray-900 mb-1">{version.fileName}</p>
+                              <div className="text-xs text-gray-600 min-w-0 flex-1">
+                                <p className="font-medium text-gray-900 mb-1 truncate" title={version.fileName}>{version.fileName}</p>
                                 <p>
                                   Uploaded:{' '}
                                   {version.uploadedAt || version.createdAt

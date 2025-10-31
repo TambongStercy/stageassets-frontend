@@ -137,7 +137,7 @@ export function EventCard({ event, stats, viewMode = 'grid', onArchiveToggle }: 
               {onArchiveToggle && (
                 <button
                   onClick={handleArchiveClick}
-                  className={`p-1.5 rounded-lg transition-all ml-auto ${
+                  className={`p-1.5 rounded-lg transition-all ml-auto cursor-pointer ${
                     event.isArchived
                       ? 'text-emerald-600 hover:bg-emerald-50'
                       : 'text-gray-500 hover:bg-gray-100'
@@ -240,7 +240,7 @@ export function EventCard({ event, stats, viewMode = 'grid', onArchiveToggle }: 
         {onArchiveToggle && (
           <button
             onClick={handleArchiveClick}
-            className={`p-1.5 rounded-lg transition-all ${
+            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
               event.isArchived
                 ? 'text-emerald-600 hover:bg-emerald-50'
                 : 'text-gray-500 hover:bg-gray-100'

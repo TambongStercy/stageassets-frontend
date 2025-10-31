@@ -20,6 +20,8 @@ import { ImageUpload } from '../../components/ImageUpload';
 import { PlanLimitError } from '../../components/PlanLimitError';
 import { WizardSteps } from '../../components/WizardSteps';
 import { AssetRequirementPresets, ASSET_PRESETS } from '../../components/AssetRequirementPresets';
+import { CustomRequirementModal } from '../../components/CustomRequirementModal';
+import { ErrorModal } from '../../components/ErrorModal';
 import { eventsService } from '../../services/events.service';
 import { eventSchema, type EventFormData } from '../../schemas/event.schema';
 import type { CreateAssetRequirementData } from '../../types/asset-requirements.types';
@@ -38,6 +40,12 @@ export default function CreateEventWizardPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
   const [customRequirements, setCustomRequirements] = useState<CreateAssetRequirementData[]>([]);
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [errorModalInfo, setErrorModalInfo] = useState<{ isOpen: boolean; title: string; message: string }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const {
     register,
@@ -406,11 +414,45 @@ export default function CreateEventWizardPage() {
       <AssetRequirementPresets
         selectedPresets={selectedPresets}
         onTogglePreset={handleTogglePreset}
-        onAddCustom={() => {
-          // For now, just show a message that custom requirements can be added later
-          alert('Custom requirements can be added from the event details page after creation.');
-        }}
+        onAddCustom={() => setIsCustomModalOpen(true)}
       />
+
+      {/* Display custom requirements */}
+      {customRequirements.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-700">Custom Requirements ({customRequirements.length})</h4>
+          {customRequirements.map((req, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-lg"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h5 className="font-medium text-gray-900">{req.label}</h5>
+                  {req.isRequired && (
+                    <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                      Required
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                    {req.assetType}
+                  </span>
+                </div>
+                {req.description && <p className="text-sm text-gray-600">{req.description}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomRequirements((prev) => prev.filter((_, i) => i !== index));
+                }}
+                className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 hover:bg-red-100 rounded transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="p-4 bg-gray-50 border-2 border-gray-200 rounded-lg">
         <p className="text-sm text-gray-700">
@@ -645,6 +687,24 @@ export default function CreateEventWizardPage() {
           </div>
         </form>
       </div>
+
+      {/* Custom Requirement Modal */}
+      <CustomRequirementModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onAdd={(requirement) => {
+          setCustomRequirements((prev) => [...prev, requirement]);
+        }}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModalInfo.isOpen}
+        onClose={() => setErrorModalInfo({ isOpen: false, title: '', message: '' })}
+        title={errorModalInfo.title}
+        message={errorModalInfo.message}
+        type="info"
+      />
     </DashboardLayout>
   );
 }

@@ -4,7 +4,12 @@
       "WebFetch(domain:stagetimer.io)",
       "WebSearch",
       "Read(//c/Users/LENOVO/Desktop/projects/Saas/stageasset-backend/src/**)",
-      "Read(//c/Users/LENOVO/Desktop/projects/Saas/stageasset-backend/**)"
+      "Read(//c/Users/LENOVO/Desktop/projects/Saas/stageasset-backend/**)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(for file in AssetRequirementPresets.tsx AssetRequirementsManager.tsx CustomRequirementModal.tsx DashboardLayout.tsx EditEventModal.tsx ErrorModal.tsx EventDetailsSidebar.tsx FileUpload.tsx ImageUpload.tsx Modal.tsx RemindersManager.tsx SessionTimeoutWarning.tsx SpeakerTable.tsx)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

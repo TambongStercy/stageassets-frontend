@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Close button for mobile */}
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
@@ -135,7 +135,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Link>
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
               title="Sign out"
             >
               <LogOut className="w-4 h-4" />
@@ -150,7 +150,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="lg:hidden h-16 bg-white border-b border-gray-200 sticky top-0 z-30 px-4 flex items-center">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <Menu className="w-6 h-6 text-gray-700" />
           </button>
